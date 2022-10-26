@@ -22,9 +22,9 @@ In contrast, there are also more lightweight approaches that use
 a variety of RNN structures (such as LSTM models [[2-6]](#2) or RNNs with
 Self-Attention [[7]](#7)) and even CNN [[8]](#8) - which is quite interesting
 taking the temporal dimension of music into account.
-(For a general overview see: [[9]](#9))
+(For a general overview see: [[9]](#9).)
 
-In this project, I would like to explore the development, facets, and
+In this project, I want to explore the development, facets, and
 differences of generative music models and identify the individual advantages
 and disadvantages of each model. In doing so, I hope to gain insight into the
 increasing explanatory power and creative potential of the models as their
@@ -49,14 +49,14 @@ I would also like to discuss the characteristics of different styles of music.
 Initially, it is planned to single out only one style of music, or better said,
 only one artist: Mozart. As a master of melody, Mozart offers the perfect
 introduction to the world of beautiful tunes. Subsequently, I would like to
-dissolve this restriction and include other artists and epochs as well.[[9]](#9)
+dissolve this restriction and include other artists and epochs as well.[[10]](#10)
 
 For my project I will use MIDI data from different sources
 like the **MAESTRO** dataset from Magenta as well as pieces from
 **ClassicalArchives**, **BitMidi** and others. This will include a mixture of simple
 bulk downloads and web scraping.
 
-## Extension
+## Extensions
 
 This project can thus be summarised under the type of **bring your own method** as it can be expanded successively on the basis of four axes:
 
@@ -64,6 +64,8 @@ This project can thus be summarised under the type of **bring your own method** 
 - Additional midi parameters
 - Different music styles
 - Complexity of the model: RNN - LSTM - Transformer
+
+The fact that these extensions are largely independent of each other results in a modular structure of the project, in that the individual modules can be strung together as desired. This allows me to look at the different aspects of the individual components, but on the other hand does not give a definite goal of the project or model, but only a trajectory. However, this is also intentional and is meant to encourage the project to be pursued and expanded beyond the university levy.
 
 ## Work-Breakdown Structure
 

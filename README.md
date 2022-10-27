@@ -1,55 +1,69 @@
 # Deep Musician
 
 Generating new, unheard musical melodies with a deep neural network on the
-basis of existing MIDI
-files and exploring the different advantages and disadvantages of a variety of
-models and the changing complexity of the input.
+basis of existing MIDI files and exploring the different advantages and
+disadvantages of a variety of models and the changing complexity of the input
+tracks.
 
 ## Creating MIDI Files with a deep neural network
 
 With **MuseNet OpenAI** created a deep neural network that "can generate
 4-minute musical compositions with 10 different instruments, and can combine
-styles from country to Mozart to the Beatles." [[1]](#1) Behind this project is
-the (philosophical) idea that musical compositions can arise not only from a
-particular artistic understanding (of harmony, rhythm, melody, etc.), but
-*soley* from a variety of previous works that are incorporated into the new
-piece as a wealth of experience. MuseNet is fuelled by "a large-scale
-**transformer model** trained to predict the next note(s) in a sequence." [[1]](#1)
-While this approach using a transformer model is certainly state of the art and
-produces a truly vibrant and rich musical style, it is very resource intensive.
+styles from country to Mozart to the Beatles." [[1]](#1) Behind this project
+resides the (philosophical) idea that musical compositions can arise not only from a
+particular (abstract) artistic understanding of harmony, rhythm, melody, etc., but also
+*solely* from a variety of previous works that are incorporated into the new, unheard
+piece as a wealth of experience.
+
+MuseNet is fuelled by "a large-scale **transformer model** trained to predict
+the next note(s) in a sequence." [[1]](#1) While this approach using a
+transformer model is certainly state of the art for sequential data and produces a truly vibrant and rich musical style, it is very resource intensive.
 
 In contrast, there are also more lightweight approaches that use
-a variety of RNN structures (such as LSTM models [[2-6]](#2) or RNNs with
-Self-Attention [[7]](#7)) and even CNN [[8]](#8) - which is quite interesting
-taking the temporal dimension of music into account.
-(For a general overview see: [[9]](#9).)
+a variety of RNN structures (such as LSTM models [[2-6]](#2) or RNN with
+Self-Attention [[7]](#7)) and even a CNN [[8]](#8) - which is quite interesting
+considering the temporal dimension of music that CNN are not designed to depict.
+(For a general overview of the different approaches of generative music models see: [[9]](#9).)
 
-In this project, I want to explore the development, facets, and
+In **this project** I want to explore the development, facets, and
 differences of generative music models and identify the individual advantages
-and disadvantages of each model. In doing so, I hope to gain insight into the
+and disadvantages of each model. In doing so, I hope to gain insights into the
 increasing explanatory power and creative potential of the models as their
 complexity increases, and to weigh these factors against their cost.
 
-## Dataset
+## Data Structure
 
-The basis of music is formed by sequentially played sounds or tones, which can
-be represented and played as a single complex waveform. While this form of
-representation already represents a concrete, unique shaping of the music, it
-is also possible to specify the individual tones of the piece in the form of
-notes with different parameters. The advantage here is that the concrete
-instrumentation is abstracted from and only the structure of the piece is
-considered. The generally accepted standard for this is MIDI. By means of MIDI
-it is possible to transmit not only pitch and length but also other parameters
-such as velocity, which offers the advantage of successively expanding my
-model.
+### Representing Music
+
+The basis of music is formed by sequentially played sounds or tones that can
+be represented as a complex **waveform**. These individual sounds can be joined
+together in any way to form an entire piece of music, which in turn is again a
+single waveform that we can play back and listen to in different audio
+formats (MP3, FLAC, WAV etc.).
+
+### MIDI
+
+While this form of representation already depicts a concrete shaping of
+the music in the form of an unique audio file, it is also possible to specify
+the individual tones of the piece in the form of notes with different
+parameters. The advantage here is that the concrete instrumentation is
+abstracted from and only the internal **structure of the piece** is considered. The
+generally accepted standard for this representation is **MIDI**. By means of MIDI it
+is possible to transmit not only the pitch and length of the individual notes,
+but also other parameters such as velocity - yet, no concrete waveform is produced.
 
 Thus, due to its abstract nature MIDI offers the possibility to extend the input of the model successively. While initially only monophonic audio tracks with constant dynamics and tone length are used, these parameters are to be successively added to the input to see how the created melodies change.
 
-I would also like to discuss the characteristics of different styles of music.
-Initially, it is planned to single out only one style of music, or better said,
-only one artist: Mozart. As a master of melody, Mozart offers the perfect
-introduction to the world of beautiful tunes. Subsequently, I would like to
-dissolve this restriction and include other artists and epochs as well.[[10]](#10)
+### Music genre
+
+Additionally I would also like to discuss the characteristics of different
+styles of music. Initially, it is planned to single out only one style of
+music, or better said, only one artist: Mozart. As a master of melody Mozart
+offers the perfect introduction to the world of beautiful tunes. Subsequently,
+I would like to dissolve this restriction and include other artists and epochs
+as well.[[10]](#10)
+
+### Dataset
 
 For my project I will use MIDI data from different sources
 like the **MAESTRO** dataset from Magenta as well as pieces from
@@ -58,14 +72,22 @@ bulk downloads and web scraping.
 
 ## Extensions
 
-This project can thus be summarised under the type of **bring your own method** as it can be expanded successively on the basis of four axes:
+This project can be summarised under the type of **bring your own method** as it can be expanded successively on the basis of four axes:
 
-- Monphonic - polyphonic
+- Monophonic - polyphonic
 - Additional midi parameters
 - Different music styles
-- Complexity of the model: RNN - LSTM - Transformer
+- Complexity of the model: RNN > LSTM > Transformer
 
-The fact that these extensions are largely independent of each other results in a modular structure of the project, in that the individual modules can be strung together as desired. This allows me to look at the different aspects of the individual components, but on the other hand does not give a definite goal of the project or model, but only a trajectory. However, this is also intentional and is meant to encourage the project to be pursued and expanded beyond the university levy.
+The fact that these extensions are largely independent of each other results in
+a **modular structure** of the project, in that the individual modules can be
+strung together as desired. This allows me to look at the different aspects of
+the individual components and evaluate them, but on the other hand does not
+give a definite goal of the project or model, rather only a trajectory that
+travels along the lines of a generative music model, that tries to enhance its
+creative potential. However, this is intentional and is meant to encourage the
+project to be pursued and expanded beyond the university levy in order to come
+up with a musical model that .
 
 ## Work-Breakdown Structure
 

@@ -14,7 +14,7 @@ def dl_bitmidi(m=0, n=125000):
     count = 0
     for i in range(m, n):
         print(
-            f"Processed Index: {i}/{n} - last MIDI file: {last_midi} - {i-last_midi} indices ago",
+            f"Processed Index: {i}/{n} - last MIDI file: {last_midi} - {i-last_midi} indices ago - total: {count}   ",
             end="\r",
         )
         file = str(i) + ".mid"

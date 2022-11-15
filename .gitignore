@@ -132,4 +132,4 @@ dmypy.json
 *.csv
 
 # Data directory
-/data/meastro-v3.0.0
+data/meastro-v3.0.0/

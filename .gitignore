@@ -128,8 +128,18 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .DS_Store
+
+# additional
 *.midi
 *.csv
+*.json
+*.mid
+*.cwp
+*.zip
 
-# Data directory
-data/meastro-v3.0.0/
+data/maestro-v3.0.0/
+data/bitmidi/
+data/Classical Archives - The Greats (MIDI Library)/
+data/The_Magic_of_MIDI/
+data/vgma/
+data/vgm/

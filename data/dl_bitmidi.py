@@ -1,0 +1,62 @@
+import argparse
+import datetime
+import time
+
+import requests
+
+
+def dl_bitmidi(m=0, n=125000):
+    """Downloads midi files from bitmidi.com by traversing the site's generic
+    index from m to n."""
+    url_stem = "https://bitmidi.com/uploads/"
+    start = time.time()
+    for i in range(m, n):
+        print(f"Download Midi: {i}/{n}", end="\r")
+        file = str(i) + ".mid"
+        url = url_stem + file
+        # if response is a 404, the file does not exist page
+        while True:
+            try:
+                response = requests.get(url, timeout=5)
+                break
+            except requests.exceptions.Timeout:
+                continue
+        if response.status_code == 520:
+            continue
+        try:
+            open("data/bitmidi/" + file, "wb").write(response.content)
+        except Exception:
+            continue
+    end = time.time()
+    duration = str(datetime.timedelta(seconds=round(end - start)))
+    print("")
+    print(f"Finished Downloading Midi Files from {m} to {n} in {duration}")
+
+
+def get_args():
+    parser = argparse.ArgumentParser(
+        description="Downloads midi files from bitmidi.com"
+    )
+    parser.add_argument(
+        "-f",
+        "--from_idx",
+        type=int,
+        required=False,
+        help="From which midi file to start",
+        default=0,
+    )
+    parser.add_argument(
+        "-t",
+        "--to_idx",
+        type=int,
+        required=False,
+        help="To which midi file to end",
+        default=125000,
+    )
+
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = get_args()
+    dl_bitmidi(args.from_idx, args.to_idx)

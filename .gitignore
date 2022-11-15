@@ -128,3 +128,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .DS_Store
+*.midi
+*.csv
+
+# Data directory
+/data/meastro-v3.0.0

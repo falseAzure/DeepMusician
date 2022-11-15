@@ -137,9 +137,9 @@ dmypy.json
 *.cwp
 *.zip
 
-data/maestro-v3.0.0/
+data/maestro/
 data/bitmidi/
-data/Classical Archives - The Greats (MIDI Library)/
-data/The_Magic_of_MIDI/
+data/classical_archives/
+data/magic_of_midi/
 data/vgma/
 data/vgm/

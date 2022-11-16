@@ -71,7 +71,7 @@ For my project I will use MIDI data from different sources:
 2. [**Classical Archives**](https://www.classicalarchives.com>) (4,918)
 3. [**Video Game Music**](https://archive.org/details/video-game-music-90000-midi-files) (92,861)
 4. [**Video Game Music Archive**](https://www.vgmusic.com/) (31,581)
-5. [**Bitmidi**](https://bitmidi.com/)
+5. [**Bitmidi**](https://bitmidi.com/) (5,311)
 6. [**The Magic of MIDI V1**](https://archive.org/details/themagicofmidiv1) (169,454)
 
 The number of total titles are indicated in parenthesis. (1) and (2) cover

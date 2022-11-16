@@ -9,7 +9,7 @@ cover a variety of genres:
    Music](https://archive.org/details/video-game-music-90000-midi-files) (vgm/)
    (92,861)
 4. [Video Game Music Archive](https://www.vgmusic.com/) (vgma/) (31,581)
-5. [Bitmidi](https://bitmidi.com/) (bitmidi/)
+5. [Bitmidi](https://bitmidi.com/) (5,311) (bitmidi/)
 6. [The Magic of MIDI V1](https://archive.org/details/themagicofmidiv1) (magic_of_midi/) (169,454)
 
 The location and the number of total

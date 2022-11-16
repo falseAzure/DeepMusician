@@ -1,20 +1,24 @@
 import argparse
 import datetime
+import os
 import time
 
 import requests
 
 
-def dl_bitmidi(m=0, n=125000):
+def dl_bitmidi(m=0, n=125000, cache=True, early_stop=True):
     """Downloads midi files from bitmidi.com by traversing the site's generic
     index from m to n."""
     url_stem = "https://bitmidi.com/uploads/"
     start = time.time()
+    if cache:
+        print("Using cached files")
+        m = max([int(i.split(".")[0]) for i in os.listdir("data/bitmidi")])
     last_midi = m - 1
     count = 0
     for i in range(m, n):
         print(
-            f"Processed Index: {i}/{n} - last MIDI file: {last_midi} - {i-last_midi} indices ago - total: {count}   ",
+            f"Processed Index: {i}/{n} - last MIDI file: {last_midi} - {i-last_midi} indices ago - total: {count}      ",
             end="\r",
         )
         file = str(i) + ".mid"
@@ -34,6 +38,9 @@ def dl_bitmidi(m=0, n=125000):
             count += 1
         except Exception:
             continue
+        if early_stop & i - last_midi > 2500:
+            print("Early stop")
+            break
     end = time.time()
     duration = str(datetime.timedelta(seconds=round(end - start)))
     print("")
@@ -59,6 +66,22 @@ def get_args():
         required=False,
         help="To which midi file to end",
         default=125000,
+    )
+    parser.add_argument(
+        "-c",
+        "--cache",
+        type=bool,
+        required=False,
+        help="Use cached files",
+        default=True,
+    )
+    parser.add_argument(
+        "-e",
+        "--early_stop",
+        type=bool,
+        required=False,
+        help="Stop early when no new files are found for 2500 indices",
+        default=True,
     )
 
     return parser.parse_args()

@@ -65,10 +65,19 @@ as well.[[10]](#10)
 
 ### Dataset
 
-For my project I will use MIDI data from different sources
-like the **MAESTRO** dataset from Magenta as well as pieces from
-**ClassicalArchives**, **BitMidi** and others. This will include a mixture of simple
-bulk downloads and web scraping.
+For my project I will use MIDI data from different sources:
+
+1. [**Meastro**](https://magenta.tensorflow.org/datasets/maestro)(1,291)
+2. [**Classical Archives**](https://www.classicalarchives.com>) (4,918)
+3. [**Video Game Music**](https://archive.org/details/video-game-music-90000-midi-files) (92,861)
+4. [**Video Game Music Archive**](https://www.vgmusic.com/) (31,581)
+5. [**Bitmidi**](https://bitmidi.com/)
+6. [**The Magic of MIDI V1**](https://archive.org/details/themagicofmidiv1) (169,454)
+
+The number of total titles are indicated in parenthesis. (1) and (2) cover
+pieces from *classical music*. (3) and (4) contain *video game* music. (5) and
+(6) comprise of all different sorts of music genres. The data acquisition will
+include a mixture of simple bulk downloads and web scraping.
 
 ## Extensions
 
@@ -86,21 +95,22 @@ the individual components and evaluate them, but on the other hand does not
 give a definite goal of the project or model, rather only a trajectory that
 travels along the lines of a generative music model, that tries to enhance its
 creative potential. However, this is intentional and is meant to encourage the
-project to be pursued and expanded beyond the university levy in order to come
-up with a musical model that .
+project to be pursued and expanded beyond the university levy in order to develop a musical model that can independently generate creative music that is (almost) indistinguishable from human-produced pieces.
 
 ## Work-Breakdown Structure
 
-- dataset collection: 7h
-- exploring, analysing and preparing data: 12h
-- designing and building an appropriate network: 25h
-- training and fine-tuning that network: 15h
-- building an application to present the results: 20h
-- writing the final report: 8h
-- preparing the presentation of your work: 5h
+| Task        | estimated   | actual      |
+| ----------- | ----------- | ----------- |
+| Dataset collection      | 7       | 8 |
+| Exploring, analysing and preparing data   | 12        |
+| Designing and building an appropriate network | 25 |
+| Training and fine-tuning that network | 15 |
+| Building an application to present the results | 20 |
+| Writing the final report | 8 |
+| Preparing the presentation of your wor | 5 |
+| **Sum** | 92 | |
 
-Sum: 92h
-
+---
 ## References
 
 <a id="1">[1]</a>

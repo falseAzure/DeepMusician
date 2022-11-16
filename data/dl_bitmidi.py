@@ -1,12 +1,13 @@
 import argparse
 import datetime
 import os
+import sys
 import time
 
 import requests
 
 
-def dl_bitmidi(m=0, n=125000, cache=True, early_stop=True, extend=False):
+def dl_bitmidi(start=0, finish=125000, cache=True, early_stop=True, extend=False):
     """Downloads midi files from bitmidi.com by traversing the site's generic
     index from m to n.
 
@@ -24,56 +25,62 @@ def dl_bitmidi(m=0, n=125000, cache=True, early_stop=True, extend=False):
         2500 indices (=sets early_stop to True).
         Defaults to False.
     """
+    STOP_AFTER = 2500
     url_stem = "https://bitmidi.com/uploads/"
-    start = time.time()
+    start_time = time.time()
     if extend:
+        print("Extend is set to True. Early stop will be set to True.")
         early_stop = True
 
     if cache:
         print("Using cached files")
-        m = max([int(i.split(".")[0]) for i in os.listdir("data/bitmidi")])
+        start = max(
+            max([int(i.split(".")[0]) for i in os.listdir("data/bitmidi")]) + 1, start
+        )
 
-    last_midi = m - 1
+    last_midi = start - 1
+    m = start
     count = 0
 
-    for i in range(m, n):
-        no_midi = i - last_midi
-        print(
-            f"Processed Index: {i}/{n} - last MIDI file: {last_midi} - {no_midi} indices ago - total: {count}      ",
-            end="\r",
-        )
-        file = str(i) + ".mid"
+    while m <= finish:
+        no_midi = m - last_midi - 1
+        file = str(m) + ".mid"
         url = url_stem + file
 
+        print(
+            f"Processed Index: {m}/{finish} - last MIDI file: {last_midi} - {no_midi} indices ago - total: {count}      ",
+            end="\r",
+        )
+
+        # early stop
+        if no_midi >= STOP_AFTER:
+            print("\nEarly stop")
+            finish = m
+            break
+        # Bypass server if request returns an exception, like Timeout or ConnectionError.
         while True:
             try:
                 response = requests.get(url, timeout=5)
                 break
-            except requests.exceptions.Timeout:
+            except Exception:
                 continue
+
         # If the response is 520, then the file doesn't exists
-        if response.status_code == 520:
-            continue
-        try:
+        if response.status_code != 520:
             open("data/bitmidi/" + file, "wb").write(response.content)
-            last_midi = i
+            last_midi = m
             count += 1
-        except Exception:
-            continue
 
-        # early stop
-        if early_stop & no_midi >= 2500:
-            print("Early stop")
-            break
+        if extend & (m == finish):
+            finish += 100
 
-        # extend the index
-        if extend & i + 1 == n:
-            n += 2500
+        m += 1
 
-    end = time.time()
-    duration = str(datetime.timedelta(seconds=round(end - start)))
-    print("")
-    print(f"Finished Downloading {count} Midi Files from {m} to {n} in {duration}")
+    end_time = time.time()
+    duration = str(datetime.timedelta(seconds=round(end_time - start_time)))
+    print(
+        f"\nFinished Downloading {count} Midi Files from Index {start} to {finish} ({finish-start}) in {duration}"
+    )
 
 
 def get_args():
@@ -100,26 +107,20 @@ def get_args():
     parser.add_argument(
         "-c",
         "--cache",
-        type=bool,
-        required=False,
+        action="store_true",
         help="Use cached files",
-        default=True,
     )
     parser.add_argument(
         "-es",
         "--early_stop",
-        type=bool,
-        required=False,
+        action="store_true",
         help="Stop early when no new files are found for 2500 indices",
-        default=True,
     )
     parser.add_argument(
         "-e",
         "--extend",
-        type=bool,
-        required=False,
+        action="store_true",
         help="Extend the search span by 2500 indices if a new midi was found within the last 2500 indices",
-        default=False,
     )
 
     return parser.parse_args()
@@ -127,4 +128,8 @@ def get_args():
 
 if __name__ == "__main__":
     args = get_args()
-    dl_bitmidi(args.from_idx, args.to_idx, args.cache, args.early_stop, args.extend)
+    try:
+        dl_bitmidi(args.from_idx, args.to_idx, args.cache, args.early_stop, args.extend)
+    except KeyboardInterrupt as e:
+        print("\nKeyboardInterrupt")
+        sys.exit(0)

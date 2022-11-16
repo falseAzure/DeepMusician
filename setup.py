@@ -18,6 +18,8 @@ setup(
         "requests==2.28.1",
         "mido==1.2.10",
         "music21==8.1.0",
+        "MIDIUtil==1.2.1",
+        "pygame==2.1.2",
         "ipykernel==6.17.0",
         "jupyter==1.0.0",
         "black==22.10.0",

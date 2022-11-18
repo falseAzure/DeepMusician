@@ -69,15 +69,17 @@ For my project I will use MIDI data from different sources:
 
 1. [**Meastro**](https://magenta.tensorflow.org/datasets/maestro)(1,291)
 2. [**Classical Archives**](https://www.classicalarchives.com>) (4,918)
-3. [**Video Game Music**](https://archive.org/details/video-game-music-90000-midi-files) (92,861)
-4. [**Video Game Music Archive**](https://www.vgmusic.com/) (31,581)
-5. [**Bitmidi**](https://bitmidi.com/) (5,311)
-6. [**The Magic of MIDI V1**](https://archive.org/details/themagicofmidiv1) (169,454)
+3. [**Symbolic Music Midi Data V1.1**](https://arxiv.org/pdf/1606.01368.pdf)
+4. [**Video Game Music**](https://archive.org/details/video-game-music-90000-midi-files) (92,861)
+5. [**Video Game Music Archive**](https://www.vgmusic.com/) (31,581)
+6. [**Bitmidi**](https://bitmidi.com/) (5,311)
+7. [**The Lakh MIDI Dataset**](https://colinraffel.com/projects/lmd/)(45,129)
+8. [**The Magic of MIDI V1**](https://archive.org/details/themagicofmidiv1) (169,454)
 
-The number of total titles are indicated in parenthesis. (1) and (2) cover
-pieces from *classical music*. (3) and (4) contain *video game* music. (5) and
-(6) comprise of all different sorts of music genres. The data acquisition will
-include a mixture of simple bulk downloads and web scraping.
+The number of total titles are indicated in parenthesis. 1-3 cover pieces from
+*classical music*. 4 and 5 contain *video game* music. 6-8 comprise of all
+different sorts of music genres. The data acquisition will include a mixture of
+simple bulk downloads and web scraping.
 
 ## Extensions
 

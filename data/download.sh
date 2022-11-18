@@ -12,6 +12,12 @@ unrar e "data/ClassicalArchivesTheGreatsMIDILibrary.rar" "data/"
 rm "data/ClassicalArchivesTheGreatsMIDILibrary.rar"
 mv "data/Classical Archives - The Greats (MIDI Library)" "data/classical_archives"
 
+# SymbolicMusicMidiData
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1KuTv61X4tPRqvTF-KBc85ZRElvp6Bg7M' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1KuTv61X4tPRqvTF-KBc85ZRElvp6Bg7M" -O "data/SymbolicMusicMidiDataV1.1.tar.gz" && rm -rf /tmp/cookies.txt
+tar -xf "data/SymbolicMusicMidiDataV1.1.tar.gz" -C "data/"
+mv "data/SymbolicMusicMidiDataV1.1" "data/smmd"
+rm "data/SymbolicMusicMidiDataV1.1.tar.gz"
+
 # VG Music Archive
 wget "https://archive.org/download/31581VideogameMusicMIDIFileswReplayGain8mbgmsfx.sf2/31%2C581%20Videogame%20Music%20MIDI%20Files%20%28w%20Replay%20Gain%20-%208mbgmsfx.sf2%29.zip" -O "data/vgmusic.com.zip"
 unzip "data/vgmusic.com.zip" -d "data/"
@@ -27,6 +33,11 @@ unzip "data/video-game-music-90000-midi-files.zip" -d "data/"
 unzip data/vgm/\*.zip -d "data/vgm/"
 rm "data/video-game-music-90000-midi-files.zip"
 rm data/vgm/*.zip
+
+# The Lakh MIDI Dataset v0.1
+wget "http://hog.ee.columbia.edu/craffel/lmd/lmd_matched.tar.gz"
+tar -xf "data/lmd_matchedtar.gz" -C "data/"
+rm "data/lmd_matched.tar.gz"
 
 # The Magic of Midi
 wget "https://archive.org/download/themagicofmidiv1/The_Magic_of_MIDI.7z" -O "data/The_Magic_of_MIDI.7z"

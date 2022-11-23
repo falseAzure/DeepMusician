@@ -48,21 +48,25 @@ def dl_bitmidi(start=0, finish=125000, cache=True, early_stop=True, extend=False
         url = url_stem + file
 
         print(
-            f"Processed Index: {m}/{finish} - last MIDI file: {last_midi} - {no_midi} indices ago - total: {count}      ",
+            f"Processed Index: {m}/{finish} - last MIDI file: {last_midi} "
+            f"- {no_midi} indices ago - total: {count}      ",
             end="\r",
         )
 
         # early stop
-        if no_midi >= STOP_AFTER:
+        if early_stop and no_midi >= STOP_AFTER:
             print("\nEarly stop")
             finish = m
             break
-        # Bypass server if request returns an exception, like Timeout or ConnectionError.
+        # Bypass server if request returns an exception, like Timeout or
+        # ConnectionError.
         while True:
             try:
                 response = requests.get(url, timeout=5)
                 break
-            except Exception:
+            except requests.exceptions.Timeout:
+                continue
+            except requests.exceptions.ConnectionError:
                 continue
 
         # If the response is 520, then the file doesn't exists
@@ -79,7 +83,8 @@ def dl_bitmidi(start=0, finish=125000, cache=True, early_stop=True, extend=False
     end_time = time.time()
     duration = str(datetime.timedelta(seconds=round(end_time - start_time)))
     print(
-        f"\nFinished Downloading {count} Midi Files from Index {start} to {finish} ({finish-start}) in {duration}"
+        f"\nFinished Downloading {count} Midi Files from "
+        f"Index {start} to {finish} ({finish-start}) in {duration}"
     )
 
 
@@ -109,18 +114,21 @@ def get_args():
         "--cache",
         action="store_true",
         help="Use cached files",
+        default=True,
     )
     parser.add_argument(
         "-es",
         "--early_stop",
         action="store_true",
         help="Stop early when no new files are found for 2500 indices",
+        default=True,
     )
     parser.add_argument(
         "-e",
         "--extend",
         action="store_true",
-        help="Extend the search span by 2500 indices if a new midi was found within the last 2500 indices",
+        help="Extend the search span by 2500 indices if a \
+            new midi was found within the last 2500 indices",
     )
 
     return parser.parse_args()
@@ -130,6 +138,6 @@ if __name__ == "__main__":
     args = get_args()
     try:
         dl_bitmidi(args.from_idx, args.to_idx, args.cache, args.early_stop, args.extend)
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         print("\nKeyboardInterrupt")
         sys.exit(0)

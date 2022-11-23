@@ -16,8 +16,13 @@ jobs:
     working_directory: ~/repo
 
     steps:
-      # Step 1: obtain repo from GitHub
+      # Step 1: Obtain repo from GitHub
       - checkout
+
+      # Step 2: restores saved dependency cache if the Branch key template or requirements.txt files have not changed since the previous run
+      - restore_cache: 
+          key: &deps1-cache deps1-{{ .Branch }}-{{ checksum "pyproject.toml" }}
+      
       # Step 2: create virtual env and install dependencies
       - run:
           name: install dependencies
@@ -26,7 +31,14 @@ jobs:
             . venv/bin/activate
             pip install --upgrade pip
             pip install -e .
-      # Step 3: run linter and tests
+
+      # Step 3: save dependency cache
+      - save_cache:
+          key: *deps1-cache
+          paths:
+            - "venv"
+
+      # Step 4: run tests
       - run:
           name: run tests
           command: |

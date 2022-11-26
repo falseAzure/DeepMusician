@@ -175,3 +175,22 @@ def process_midi_files(midi_files=list, division=1 / 16):
     meta_df = meta_dict_to_df(meta_dict)
     pianorolls = df_to_pianorolls(notes_df, division)
     return pianorolls, notes_df, meta_df
+
+
+def get_density(pianoroll):
+    return sum(sum(pianoroll)) / len(pianoroll)
+
+
+def get_train_val_test(pianorolls, train=0.8, val=0.1, test=0.1):
+    assert train + val + test == 1
+    n = len(pianorolls)
+    train_idx = int(n * train)
+    val_idx = int(n * (train + val))
+    return (
+        pianorolls[:train_idx],
+        pianorolls[train_idx:val_idx],
+        pianorolls[val_idx:],
+        range(train_idx),
+        range(train_idx, val_idx),
+        range(val_idx, n),
+    )

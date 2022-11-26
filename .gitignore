@@ -130,10 +130,8 @@ dmypy.json
 .DS_Store
 
 # additional
-*.midi
 *.csv
 *.json
-*.mid
 *.cwp
 *.zip
 
@@ -144,4 +142,5 @@ data/magic_of_midi/
 data/vgma/
 data/vgm/
 data/smmd/
+data/lmd_matched/
 playaround/

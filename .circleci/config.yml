@@ -11,7 +11,7 @@ orbs:
 jobs:
   build:
     docker:
-      - image: circleci/python:3.10
+      - image: circleci/python:3.10.8
 
     working_directory: ~/repo
 
@@ -19,9 +19,9 @@ jobs:
       # Step 1: Obtain repo from GitHub
       - checkout
 
-      # Step 2: restores saved dependency cache if the Branch key template or requirements.txt files have not changed since the previous run
+      # Step 2: restores saved dependency cache if the Branch key template or pyproject.toml files have not changed since the previous run
       - restore_cache: 
-          key: &deps1-cache deps1-{{ .Branch }}-{{ checksum "pyproject.toml" }}
+          key: &deps1-cache deps2-{{ .Branch }}-{{ checksum "pyproject.toml" }}
       
       # Step 2: create virtual env and install dependencies
       - run:
@@ -34,7 +34,7 @@ jobs:
 
       # Step 3: save dependency cache
       - save_cache:
-          key: *deps1-cache
+          key: *deps2-cache
           paths:
             - "venv"
 

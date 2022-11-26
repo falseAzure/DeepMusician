@@ -19,7 +19,9 @@ jobs:
       # Step 1: Obtain repo from GitHub
       - checkout
 
-      # Step 2: restores saved dependency cache if the Branch key template or pyproject.toml files have not changed since the previous run
+      # Step 2: restores saved dependency cache if the Branch key template or
+      # pyproject.toml files have not changed since the previous run
+      # to clear cache increment the deps key by 1 (e.g. deps3)
       # - restore_cache: 
       #     key: &deps2-cache deps2-{{ .Branch }}-{{ checksum "pyproject.toml" }}
       

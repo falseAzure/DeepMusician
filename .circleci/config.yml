@@ -21,7 +21,7 @@ jobs:
 
       # Step 2: restores saved dependency cache if the Branch key template or pyproject.toml files have not changed since the previous run
       - restore_cache: 
-          key: &deps1-cache deps2-{{ .Branch }}-{{ checksum "pyproject.toml" }}
+          key: &deps2-cache deps2-{{ .Branch }}-{{ checksum "pyproject.toml" }}
       
       # Step 2: create virtual env and install dependencies
       - run:

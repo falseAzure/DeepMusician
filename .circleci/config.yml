@@ -23,22 +23,21 @@ jobs:
       # - restore_cache: 
       #     key: &deps2-cache deps2-{{ .Branch }}-{{ checksum "pyproject.toml" }}
       
-      # Step 2: create virtual env and install dependencies
+      # Step 3: create virtual env and install dependencies
       - run:
           name: install dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install --upgrade pip
             pip install -e .
 
-      # Step 3: save dependency cache
+      # Step 4: save dependency cache
       # - save_cache:
       #     key: *deps2-cache
       #     paths:
       #       - "venv"
 
-      # Step 4: run tests
+      # Step 5: run tests
       - run:
           name: run tests
           command: |

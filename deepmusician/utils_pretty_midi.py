@@ -1,48 +1,50 @@
+import os
+
 import numpy as np
 import pandas as pd
 import pretty_midi as pm
-import os
+
 
 # utils for pretty_midi
-def get_numpy_notes_from_notes(notes, pmidi):
-    np_notes = np.zeros([len(notes), 6])
+def get_notes_np_from_notes(notes, pmidi):
+    notes_np = np.zeros([len(notes), 6])
     for i, note in enumerate(notes):
-        np_notes[i, 0] = note.start
-        np_notes[i, 1] = note.end
-        np_notes[i, 2] = note.pitch
-        np_notes[i, 3] = note.velocity
-        np_notes[i, 4] = pmidi.time_to_tick(note.start)
-        np_notes[i, 5] = pmidi.time_to_tick(note.end)
-    return np_notes
+        notes_np[i, 0] = note.start
+        notes_np[i, 1] = note.end
+        notes_np[i, 2] = note.pitch
+        notes_np[i, 3] = note.velocity
+        notes_np[i, 4] = pmidi.time_to_tick(note.start)
+        notes_np[i, 5] = pmidi.time_to_tick(note.end)
+    return notes_np
 
 
-def get_numpy_notes_from_instrument(instrument, pmidi):
+def get_notes_np_from_instrument(instrument, pmidi):
     instrument.remove_invalid_notes()
     notes = instrument.notes
-    np_notes = get_numpy_notes_from_notes(notes, pmidi)
-    return np_notes
+    notes_np = get_notes_np_from_notes(notes, pmidi)
+    return notes_np
 
 
-def get_numpy_notes_from_instruments(instruments, pmidi):
-    np_notes_all = np.empty((0, 7))
+def get_notes_np_from_instruments(instruments, pmidi):
+    notes_all_np = np.empty((0, 7))
     for instrument in instruments:
-        np_notes = get_numpy_notes_from_instrument(instrument, pmidi)
-        np_notes = np.append(
-            np_notes, np.full((len(np_notes), 1), instrument.program), axis=-1
+        notes_np = get_notes_np_from_instrument(instrument, pmidi)
+        notes_np = np.append(
+            notes_np, np.full((len(notes_np), 1), instrument.program), axis=-1
         )
-        np_notes_all = np.append(np_notes_all, np_notes, axis=0)
-    return np_notes_all
+        notes_all_np = np.append(notes_all_np, notes_np, axis=0)
+    return notes_all_np
 
 
-def get_numpy_notes_from_pm(pmidi):
+def get_notes_np_from_pm(pmidi):
     instruments = pmidi.instruments
-    np_notes_all = get_numpy_notes_from_instruments(instruments, pmidi)
-    return np_notes_all
+    notes_all_np = get_notes_np_from_instruments(instruments, pmidi)
+    return notes_all_np
 
 
-def get_numpy_notes_from_file(midi_file):
+def get_notes_np_from_file(midi_file):
     pmidi = pm.PrettyMIDI(midi_file)
-    return get_numpy_notes_from_pm(pmidi)
+    return get_notes_np_from_pm(pmidi)
 
 
 def extract_info_instruments(instruments):
@@ -52,9 +54,9 @@ def extract_info_instruments(instruments):
     }
 
 
-def get_numpy_notes_from_files(midi_files=list):
+def get_notes_np_from_files(midi_files=list):
     meta_dict = {}
-    np_notes_all = np.empty((0, 8))
+    notes_all_np = np.empty((0, 8))
     for i, fname in enumerate(midi_files):
         name = os.path.basename(fname)
         print(f"Processing {i+1}/{len(midi_files)}: {name:100}", end="\r", flush=True)
@@ -66,15 +68,15 @@ def get_numpy_notes_from_files(midi_files=list):
             "end_tick": pmidi.time_to_tick(pmidi.get_end_time()),
             "instruments": dict(extract_info_instruments(pmidi.instruments)),
         }
-        np_notes = get_numpy_notes_from_pm(pmidi)
-        np_notes = np.append(np_notes, np.full((len(np_notes), 1), i), axis=-1)
-        np_notes_all = np.append(np_notes_all, np_notes, axis=0)
-    return np_notes_all, meta_dict
+        notes_np = get_notes_np_from_pm(pmidi)
+        notes_np = np.append(notes_np, np.full((len(notes_np), 1), i), axis=-1)
+        notes_all_np = np.append(notes_all_np, notes_np, axis=0)
+    return notes_all_np, meta_dict
 
 
-def np_notes_to_pd(np_notes):
-    df_notes = pd.DataFrame(
-        np_notes,
+def notes_np_to_df(notes_np):
+    notes_df = pd.DataFrame(
+        notes_np,
         columns=[
             "start_time",
             "end_time",
@@ -86,8 +88,8 @@ def np_notes_to_pd(np_notes):
             "midi_id",
         ],
     )
-    df_notes["track_id"] = df_notes.groupby(["midi_id", "instrument_id"]).ngroup()
-    return df_notes
+    notes_df["track_id"] = notes_df.groupby(["midi_id", "instrument_id"]).ngroup()
+    return notes_df
 
 
 def meta_dict_to_df(meta_dict):
@@ -110,7 +112,7 @@ def meta_dict_to_df(meta_dict):
             ins_name.append(meta_dict[idx]["instruments"][ins]["instrument_name"])
             ins_is_drum.append(meta_dict[idx]["instruments"][ins]["is_drum"])
 
-    df_meta = pd.DataFrame(
+    meta_df = pd.DataFrame(
         {
             "midi_id": midi_id,
             "midi_name": midi_name,
@@ -122,4 +124,4 @@ def meta_dict_to_df(meta_dict):
             "ins_is_drum": ins_is_drum,
         }
     )
-    return df_meta
+    return meta_df

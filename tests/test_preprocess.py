@@ -73,19 +73,6 @@ def test_notes_np(get_notes_np, get_meta_dict, get_midi_files):
     # length
     assert max(get_notes_np[:, 5]) + 1 == len(get_midi_files)
     assert len(get_meta_dict) == len(get_midi_files)
-
-    # sums
-    sums = np.array(
-        [
-            5.04763197e07,
-            3.78078400e06,
-            3.39725400e06,
-            2.83200833e04,
-            0.00000000e00,
-            1.75163000e05,
-        ]
-    )
-    assert np.isclose(sum(get_notes_np), sums).all()
     assert get_notes_np.shape == (56421, 6)
 
 
@@ -104,6 +91,13 @@ def test_notes_df(get_notes_df, get_meta_df):
 
     # number of unique tracks
     assert sum(get_notes_df.midi_id.unique()) == sum(get_meta_df.midi_id.unique())
+
+    # sums
+    assert np.isclose(sum(get_notes_df.offset), 50476319.749999896)
+    assert np.isclose(sum(get_notes_df.pitch), 3780784)
+    assert np.isclose(sum(get_notes_df.velocity), 3397254)
+    assert np.isclose(sum(get_notes_df.duration), 28320.083333332597)
+    assert np.isclose(sum(get_notes_df.track_id), 175163)
 
 
 def test_pianorolls(get_pianorolls):

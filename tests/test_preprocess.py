@@ -13,6 +13,7 @@ import utils_music21
 @pytest.fixture(scope="session")
 def get_midi_files():
     files = list(Path("tests/test_data/midi_files/").glob("*.mid"))
+    files.sort()
     return files
 
 
@@ -97,7 +98,7 @@ def test_notes_df(get_notes_df, get_meta_df):
     assert np.isclose(sum(get_notes_df.pitch), 3780784)
     assert np.isclose(sum(get_notes_df.velocity), 3397254)
     assert np.isclose(sum(get_notes_df.duration), 28320.083333332597)
-    # assert np.isclose(sum(get_notes_df.track_id), 175163)
+    assert np.isclose(sum(get_notes_df.track_id), 175163)
 
 
 def test_pianorolls(get_pianorolls):

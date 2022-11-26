@@ -8,6 +8,7 @@ import warnings
 import music21
 import numpy as np
 import pandas as pd
+import torch
 
 
 def get_notes_np_from_instrument(instrument):
@@ -187,9 +188,9 @@ def get_train_val_test(pianorolls, train=0.8, val=0.1, test=0.1):
     train_idx = int(n * train)
     val_idx = int(n * (train + val))
     return (
-        pianorolls[:train_idx],
-        pianorolls[train_idx:val_idx],
-        pianorolls[val_idx:],
+        torch.tensor(np.concatenate(pianorolls[:train_idx], axis=0)),
+        torch.tensor(np.concatenate(pianorolls[train_idx:val_idx], axis=0)),
+        torch.tensor(np.concatenate(pianorolls[val_idx:], axis=0)),
         range(train_idx),
         range(train_idx, val_idx),
         range(val_idx, n),

@@ -20,8 +20,8 @@ jobs:
       - checkout
 
       # Step 2: restores saved dependency cache if the Branch key template or pyproject.toml files have not changed since the previous run
-      - restore_cache: 
-          key: &deps2-cache deps2-{{ .Branch }}-{{ checksum "pyproject.toml" }}
+      # - restore_cache: 
+      #     key: &deps2-cache deps2-{{ .Branch }}-{{ checksum "pyproject.toml" }}
       
       # Step 2: create virtual env and install dependencies
       - run:
@@ -33,10 +33,10 @@ jobs:
             pip install -e .
 
       # Step 3: save dependency cache
-      - save_cache:
-          key: *deps2-cache
-          paths:
-            - "venv"
+      # - save_cache:
+      #     key: *deps2-cache
+      #     paths:
+      #       - "venv"
 
       # Step 4: run tests
       - run:

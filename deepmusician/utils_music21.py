@@ -5,9 +5,11 @@ Provides utils functions for the preprocessing of the midi files with music21.
 import os
 import warnings
 
+import matplotlib.pyplot as plt
 import music21
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import torch
 
 
@@ -50,15 +52,16 @@ def get_notes_np_from_instrument(instrument):
 def get_notes_np_from_m21(midi21):
     instruments = music21.instrument.partitionByInstrument(midi21)
     notes_all_np = np.empty((0, 5), dtype=float)
-    for i, instrument in enumerate(instruments):
+    valid_instruments = [ins for ins in instruments if len(ins.notes) > 0]
+    for i, instrument in enumerate(valid_instruments):
         notes_np = get_notes_np_from_instrument(instrument)
         notes_np = np.append(notes_np, np.full((len(notes_np), 1), i), axis=-1)
         notes_all_np = np.append(notes_all_np, notes_np, axis=0)
     return notes_all_np, instruments
 
 
-def get_notes_np_from_file(fname):
-    midi21 = music21.converter.parse(fname)
+def get_notes_np_from_file(midi_file):
+    midi21 = music21.converter.parse(midi_file)
     return get_notes_np_from_m21(midi21)
 
 
@@ -145,18 +148,16 @@ def meta_dict_to_df(meta_dict):
     return meta_df
 
 
-def df_track_to_pianoroll(notes_df, track, division=1 / 16):
-    offset = np.round(
-        np.array(
-            notes_df[notes_df.track_id == track].offset / (division * 4), dtype=int
-        )
-    )
-    pitch = np.array(notes_df[notes_df.track_id == track].pitch - 21, dtype=int)
+def df_track_to_pianoroll(notes_df, division=1 / 16):
+    offset = np.round(np.array(notes_df.offset / (division * 4), dtype=int))
+    pitch = np.array(notes_df.pitch - 21, dtype=int)
     assert len(offset) == len(pitch)
 
     pianoroll = np.zeros((int(offset.max()) + 1, 88), dtype=int)
     for i, off in enumerate(offset):
-        # only piano notes
+        # duplicated notes are ignored, since they are placed on the same
+        # offset and pitch > the returned pianoroll might have less notes than the input
+        # only piano notes are considered (pitch: 21-108)
         if pitch[i] < 88 and pitch[i] >= 0:
             pianoroll[off, pitch[i]] = 1
 
@@ -166,7 +167,9 @@ def df_track_to_pianoroll(notes_df, track, division=1 / 16):
 def df_to_pianorolls(notes_df, division=1 / 16):
     pianorolls = []
     for track in notes_df.track_id.unique():
-        pianorolls.append(df_track_to_pianoroll(notes_df, track, division))
+        pianorolls.append(
+            df_track_to_pianoroll(notes_df[notes_df.track_id == track], division)
+        )
     return pianorolls
 
 
@@ -195,3 +198,100 @@ def get_train_val_test(pianorolls, train=0.8, val=0.1, test=0.1):
         range(train_idx, val_idx),
         range(val_idx, n),
     )
+
+
+def plot_pianoroll(pianoroll, length=128):
+    min_note = min(np.where(pianoroll[:length] == 1)[1])
+    max_note = max(np.where(pianoroll[:length] == 1)[1])
+    first_note = min(np.where(pianoroll == 1)[0])
+
+    data = pianoroll[first_note:length, min_note : max_note + 1].T
+
+    x = range(min_note, max_note + 1)
+    x_notes = []
+    for n in x:
+        x_notes.append(str(music21.pitch.Pitch(n + 21)))
+    plt.figure(figsize=(12, 6))
+    ax = sns.heatmap(
+        data,
+        cbar=False,
+        square=True,
+        linecolor="black",
+        linewidths=0.1,
+        cmap="Blues",
+        yticklabels=x_notes,
+    )
+    ax.invert_yaxis()
+    plt.xlabel("1/16 Notes")
+    plt.ylabel("Note")
+    plt.show()
+
+
+def pianoroll_to_note(pianoroll, division=1 / 16):
+    music21_notes = []
+    for i in range(len(pianoroll)):
+        n_notes = sum(
+            pianoroll[
+                i,
+            ]
+        )
+        if n_notes == 1:
+            pitch = int(
+                np.where(
+                    pianoroll[
+                        i,
+                    ]
+                    == 1
+                )[0]
+            )
+            note = music21.note.Note(pitch + 21)
+            note.storedInstrument = music21.instrument.Piano()
+            note.offset = i * (division * 4)
+            music21_notes.append(note)
+        if n_notes > 1:
+            chord_list = []
+            pitches = np.where(
+                pianoroll[
+                    i,
+                ]
+                == 1
+            )
+            for pitch in pitches[0]:
+                note = music21.note.Note(pitch + 21)
+                chord_list.append(note)
+            chord = music21.chord.Chord(chord_list)
+            chord.storedInstrument = music21.instrument.Piano()
+            chord.offset = i * (division * 4)
+            music21_notes.append(chord)
+    return music21_notes
+
+
+def notes_to_midi(music21_notes, save=None):
+    midi_stream = music21.stream.Stream(
+        music21_notes, timeSignature=music21.meter.TimeSignature("4/4")
+    )
+    if save is not None:
+        print("Saving midi file to {}".format(save))
+        midi_stream.write("midi", fp=save)
+    return midi_stream
+
+
+def pianoroll_to_midi(pianoroll, division=1 / 16, save=None):
+    music21_notes = pianoroll_to_note(pianoroll, division)
+    return notes_to_midi(music21_notes, save)
+
+
+def pianoroll_to_df(pianoroll):
+    division = 1 / 16
+    notes_df = pd.DataFrame(pianoroll, columns=["note" + str(i) for i in range(88)])
+    notes_df["id"] = notes_df.index
+    notes_df = pd.wide_to_long(notes_df, stubnames=["note"], i="id", j="p")
+    notes_df = notes_df[notes_df.note == 1]
+    notes_df["pitch"] = notes_df.index.get_level_values(1) + 21
+    notes_df["offset"] = notes_df.index.get_level_values(0) * (division * 4)
+    notes_df["velocity"] = 100
+    notes_df["duration"] = 1
+    notes_df.sort_index(inplace=True)
+    notes_df.reset_index(drop=True, inplace=True)
+    notes_df['n_notes'] = notes_df.groupby('offset').transform('count')['note']
+    return notes_df

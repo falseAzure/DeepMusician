@@ -1,5 +1,6 @@
 import os
 
+import IPython
 import numpy as np
 import pandas as pd
 import pretty_midi as pm
@@ -125,3 +126,7 @@ def meta_dict_to_df(meta_dict):
         }
     )
     return meta_df
+
+def play_midi(midi_file):
+    pmidi = pm.PrettyMIDI(midi_file)
+    return IPython.display.Audio(pmidi.synthesize(fs=16000), rate=16000)

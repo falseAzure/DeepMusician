@@ -1,3 +1,6 @@
+"""
+Tests for training pipeline
+"""
 # import sys
 
 # sys.path.append("deepmusician/")

@@ -145,3 +145,5 @@ data/smmd/
 data/lmd_matched/
 playaround/
 tests/test.ipynb
+checkpoints/
+lightning_logs/

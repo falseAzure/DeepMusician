@@ -1,12 +1,18 @@
-import sys
+# import sys
 
-sys.path.append("deepmusician/")
-sys.path.append("../deepmusician/")
+# sys.path.append("deepmusician/")
+# sys.path.append("../deepmusician/")
 from pathlib import Path
 
 import numpy as np
 import pytest
-import utils_music21
+from utils_music21 import (
+    df_to_pianorolls,
+    get_notes_np_from_files,
+    meta_dict_to_df,
+    notes_np_to_df,
+    process_midi_files,
+)
 
 
 # Fixtures
@@ -19,14 +25,14 @@ def get_midi_files():
 
 @pytest.fixture(scope="session")
 def get_notes_np_meta_dict(get_midi_files):
-    notes_np, meta_dict = utils_music21.get_notes_np_from_files(get_midi_files)
+    notes_np, meta_dict = get_notes_np_from_files(get_midi_files)
     return notes_np, meta_dict
 
 
 @pytest.fixture(scope="session")
 def get_notes_df_meta_df(get_notes_np_meta_dict):
-    notes_df = utils_music21.notes_np_to_df(get_notes_np_meta_dict[0])
-    meta_df = utils_music21.meta_dict_to_df(get_notes_np_meta_dict[1])
+    notes_df = notes_np_to_df(get_notes_np_meta_dict[0])
+    meta_df = meta_dict_to_df(get_notes_np_meta_dict[1])
 
     return notes_df, meta_df
 
@@ -36,7 +42,7 @@ def get_notes_np(get_notes_np_meta_dict):
     return get_notes_np_meta_dict[0]
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def get_meta_dict(get_notes_np_meta_dict):
     return get_notes_np_meta_dict[1]
 
@@ -53,15 +59,13 @@ def get_meta_df(get_notes_df_meta_df):
 
 @pytest.fixture(scope="session")
 def get_pianorolls(get_notes_df):
-    pianorolls = utils_music21.df_to_pianorolls(get_notes_df, division=1 / 16)
+    pianorolls = df_to_pianorolls(get_notes_df, division=1 / 16)
     return pianorolls
 
 
 @pytest.fixture(scope="session")
 def get_all_from_entire_preprocess(get_midi_files):
-    pianorolls, notes_df, meta_df = utils_music21.process_midi_files(
-        get_midi_files, division=1 / 16
-    )
+    pianorolls, notes_df, meta_df = process_midi_files(get_midi_files, division=1 / 16)
     return pianorolls, notes_df, meta_df
 
 
@@ -91,7 +95,7 @@ def test_notes_df(get_notes_df, get_meta_df):
     assert min(get_notes_df.velocity) >= 0
 
     # number of unique tracks
-    assert sum(get_notes_df.midi_id.unique()) == sum(get_meta_df.midi_id.unique())
+    assert sum(get_notes_df.file_id.unique()) == sum(get_meta_df.file_id.unique())
 
     # sums
     assert np.isclose(sum(get_notes_df.offset), 50476319.749999896)
@@ -132,8 +136,8 @@ def test_entire_preprocess_pipeline(get_all_from_entire_preprocess):
     assert min(get_all_from_entire_preprocess[1].velocity) >= 0
 
     # number of unique tracks
-    assert sum(get_all_from_entire_preprocess[1].midi_id.unique()) == sum(
-        get_all_from_entire_preprocess[2].midi_id.unique()
+    assert sum(get_all_from_entire_preprocess[1].file_id.unique()) == sum(
+        get_all_from_entire_preprocess[2].file_id.unique()
     )
 
     # check pianorolls

@@ -1,5 +1,5 @@
 """
-Modolue for model definition.
+Module for model definition.
 """
 
 import random
@@ -36,8 +36,12 @@ SOS_TOKEN = torch.zeros(1, BATCH_SIZE, 88)
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def get_train_test(pianorolls, train=0.8):
-    assert train < 1 and train > 0
+def get_train_test(pianorolls: list, train=0.8):
+    """
+    Split the data given as a list of pianorolls into train and test set.
+    Returns the train and test set, as well as the indices of the train and test set.
+    """
+    assert train < 1 and train > 0, "train must be a float between 0 and 1"
     n = len(pianorolls)
     train_idx = int(n * train) + (n % train > 0)  # round up
     if n == train_idx:  # if there is no test set, due to insufficient data
@@ -57,7 +61,12 @@ def get_train_test(pianorolls, train=0.8):
 
 
 class MidiDataset(data.Dataset):
-    def __init__(self, pianorolls: list, seq_len=96, remove_zeros=False) -> None:
+    """
+    Dataset Class for MIDI files.
+    Stacks the list of pianorolls into a tensor of shape (n_steps, 88).
+    """
+
+    def __init__(self, pianorolls: list, seq_len=96, remove_zeros=False):
         tracks = []
         for pianoroll in pianorolls:
 
@@ -66,23 +75,29 @@ class MidiDataset(data.Dataset):
             if remove_zeros:
                 nz_unique = np.unique(nz)
                 pianoroll = pianoroll[nz_unique]
+            # remove empty time steps
             else:
                 nz_min = nz.min()
                 nz_max = nz.max()
                 pianoroll = pianoroll[nz_min : nz_max + 1]
 
+            # pad track to a multiple of seq_len
             short = seq_len - len(pianoroll) % seq_len
             track = torch.concat(
                 [torch.tensor(pianoroll), torch.zeros(short, 88)], dim=0
             )
             tracks.append(track)
+
         tracks = torch.cat(tracks, dim=0)
         assert len(tracks) % seq_len == 0
+
         self.notes = tracks
         self.seq_len = seq_len
 
     def __getitem__(self, index):
-        # Select sample
+        # Select sample: get a sequence of notes that is 2*seq_len long and
+        # split it into two sequences of length seq_len: first sequence is the
+        # input, second sequence is the target
         sample = self.notes[index : (index + self.seq_len * 2)]
         sample = np.asarray(sample).astype(np.float32)
         return sample[: self.seq_len], sample[self.seq_len :]
@@ -92,6 +107,8 @@ class MidiDataset(data.Dataset):
 
 
 class MidiDataModule(pl.LightningDataModule):
+    """Data Module for MIDI files."""
+
     def __init__(
         self,
         pianorolls=[],
@@ -226,6 +243,8 @@ class Classifier(pl.LightningModule):
 
 
 class Seq2Seq(pl.LightningModule):
+    """Wrapper for the encoder, decoder and classifier."""
+
     def __init__(
         self,
         encoder=EncoderRNN(),
@@ -251,8 +270,8 @@ class Seq2Seq(pl.LightningModule):
         self.n_training_steps = n_training_steps
         self.teacher_forcing_ratio = teacher_forcing_ratio
         self.decoder_n_layers = decoder_n_layers
-        self.SOS_token = SOS_token
-        self.info = info
+        self.SOS_token = SOS_token  # Start of sequence token
+        self.info = info  # for logging
 
         self.save_hyperparameters(
             ignore=["encoder", "decoder", "classifier", "criterion", "SOS_token"]
@@ -314,25 +333,13 @@ class Seq2Seq(pl.LightningModule):
         train_target = batch[1]
         output = self(train_source, train_target)
         output_seq = output["output_seq"]
+
+        # metrics
         loss = self.criterion(output_seq, train_target)
         density = get_density(output_seq.detach().numpy())
         precision = get_precision(output_seq, train_target)
         recall = get_recall(output_seq, train_target)
 
-        # print(
-        #     "Epoche: ",
-        #     self.current_epoch,
-        #     " - Step: ",
-        #     batch_idx + 1,
-        #     "/",
-        #     self.n_training_steps,
-        #     " - Loss : ",
-        #     round(loss.item(), 4),
-        #     " - Density: ",
-        #     round(density, 0),
-        #     sep="",
-        #     end="\r",
-        # )
         self.log_dict(
             {
                 "train_loss": loss,
@@ -345,6 +352,7 @@ class Seq2Seq(pl.LightningModule):
             on_step=True,
             on_epoch=True,
         )
+
         return {"loss": loss, "output_seq": output_seq, "target_seq": train_target}
 
     def training_epoch_end(self, outputs):
@@ -364,12 +372,27 @@ class Seq2Seq(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         train_source = batch[0]
         train_target = batch[1]
-        output_seq = self(train_source, train_target)
-        output_seq = output_seq.transpose(0, 1)
+        output = self(train_source, train_target)
+        output_seq = output["output_seq"]
+
+        # metrics
         loss = self.criterion(output_seq, train_target)
-        density = get_density(output_seq)
-        self.log("train_loss", loss, prog_bar=True, logger=True)
-        self.log("density", density, prog_bar=True, logger=True)
+        density = get_density(output_seq.detach().numpy())
+        precision = get_precision(output_seq, train_target)
+        recall = get_recall(output_seq, train_target)
+        self.log_dict(
+            {
+                "train_loss": loss,
+                "density": density,
+                "precision": precision,
+                "recall": recall,
+            },
+            prog_bar=True,
+            logger=True,
+            on_step=True,
+            on_epoch=True,
+        )
+
         return {"loss": loss, "output_seq": output_seq, "target_seq": train_target}
 
     def configure_optimizers(self):
@@ -382,6 +405,11 @@ class Seq2Seq(pl.LightningModule):
         seq_len=96,
         threshold=0.5,
     ):
+        """
+        Method to generate a sequence of notes via the decoder and
+        classifier from a hidden state, that is either only zeros, randomly
+        initialised or derived from the (trained) encoder model.
+        """
         assert init_hidden in [
             "zero",
             "random",

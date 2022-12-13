@@ -1,3 +1,6 @@
+"""
+Tests for postprocessing pipeline, e.g. generating music from a trained model
+"""
 # import sys
 
 # sys.path.append("deepmusician/")

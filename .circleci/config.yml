@@ -44,6 +44,7 @@ jobs:
       # Step 5: run tests
       - run:
           name: run tests
+          no_output_timeout: 30m
           command: |
             . venv/bin/activate
             tox

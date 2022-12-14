@@ -62,9 +62,9 @@ def test_trainer(get_trainer_pytest):
     assert trainer is not None
 
 
-# def test_training(get_model, get_datamodule, get_trainer_pytest):
-#     model = get_model
-#     datamodule = get_datamodule
-#     trainer = get_trainer_pytest
-#     trainer.fit(model, datamodule)
-#     assert trainer is not None
+def test_training(get_model, get_datamodule, get_trainer_pytest):
+    model = get_model
+    datamodule = get_datamodule
+    trainer = get_trainer_pytest
+    trainer.fit(model, datamodule)
+    assert trainer is not None

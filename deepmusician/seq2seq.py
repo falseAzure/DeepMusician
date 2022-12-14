@@ -13,7 +13,6 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils import data
 from torch.utils.data import DataLoader
-from utils_music21 import get_density
 
 # import torch.optim as optim
 
@@ -32,6 +31,7 @@ SEQ_LEN = 96
 NUM_WORKERS = 8
 DROP_OUT = 0.2
 SOS_TOKEN = torch.zeros(1, BATCH_SIZE, 88)
+THRESHOLD = 0.5
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -63,7 +63,9 @@ def get_train_test(pianorolls: list, train=0.8):
 class MidiDataset(data.Dataset):
     """
     Dataset Class for MIDI files.
-    Stacks the list of pianorolls into a tensor of shape (n_steps, 88).
+    Stacks the list of pianorolls into a single tensor of shape (n_steps, 88).
+    Removes leading and trailing zeros - and if remove_zeros is True - also
+    empty time steps.
     """
 
     def __init__(self, pianorolls: list, seq_len=96, remove_zeros=False):
@@ -95,9 +97,11 @@ class MidiDataset(data.Dataset):
         self.seq_len = seq_len
 
     def __getitem__(self, index):
-        # Select sample: get a sequence of notes that is 2*seq_len long and
-        # split it into two sequences of length seq_len: first sequence is the
-        # input, second sequence is the target
+        """
+        Select sample: get a sequence of notes that is 2*seq_len long and split
+        it into two sequences of length seq_len: first sequence is the input,
+        second sequence is the target
+        """
         sample = self.notes[index : (index + self.seq_len * 2)]
         sample = np.asarray(sample).astype(np.float32)
         return sample[: self.seq_len], sample[self.seq_len :]
@@ -107,7 +111,7 @@ class MidiDataset(data.Dataset):
 
 
 class MidiDataModule(pl.LightningDataModule):
-    """Data Module for MIDI files."""
+    """Generic DataModule for MIDI files."""
 
     def __init__(
         self,
@@ -134,7 +138,6 @@ class MidiDataModule(pl.LightningDataModule):
         )
 
     def train_dataloader(self):
-
         return DataLoader(
             self.train_dataset, batch_size=self.batch_size, num_workers=NUM_WORKERS
         )
@@ -149,8 +152,51 @@ class MidiDataModule(pl.LightningDataModule):
             self.test_dataset, batch_size=self.batch_size, num_workers=NUM_WORKERS
         )
 
+    def get_batch(self):
+        return next(iter(self.train_dataloader()))
+
+
+class Loss(nn.Module):
+    def __init__(self, gamma=1.0, alpha=1e-6, type="focal"):
+        super(Loss, self).__init__()
+        assert type in ["focal", "focal+", "bce"], "type must be 'focal' or 'bce'"
+        self.gamma = torch.tensor(gamma, dtype=torch.float32)
+        self.alpha = alpha
+        self.type = type
+
+    def forward(self, outputs, targets):
+        if self.type == "bce":
+            BCE_loss = F.binary_cross_entropy(outputs, targets)
+            return BCE_loss
+
+        if self.type == "focal":
+            BCE_loss = F.binary_cross_entropy(outputs, targets, reduction="none")
+            pt = torch.exp(-BCE_loss)  # prevents nans when probability 0
+            F_loss = self.alpha * (1 - pt) ** self.gamma * BCE_loss
+            return F_loss.mean()
+
+        if self.type == "focal+":
+            outputs = torch.sigmoid(outputs)
+            targets = targets.type_as(outputs)
+
+            non_background_mask = targets != 0
+            targets = targets[non_background_mask]
+            outputs = outputs[non_background_mask]
+
+            probabilities = outputs * targets + (1 - outputs) * (1 - targets)
+
+            alpha_factor = torch.ones_like(probabilities) * self.alpha
+            alpha_factor = torch.where(targets == 1, alpha_factor, 1 - alpha_factor)
+            focal_weight = torch.pow(1 - probabilities, self.gamma)
+
+            loss = -alpha_factor * focal_weight * torch.log(probabilities + 1e-8)
+
+            return torch.mean(loss)
+
 
 class EncoderRNN(pl.LightningModule):
+    """Encoder RNN for the Seq2Seq model."""
+
     def __init__(
         self,
         input_size=INPUT_DIM,
@@ -173,6 +219,7 @@ class EncoderRNN(pl.LightningModule):
         )
 
     def forward(self, input_seq, hidden=None):
+        """Dims are given as comments in the code."""
         # input_seq = (batch size, seq len, input dim)
         # Forward pass through GRU
         outputs, hidden = self.gru(input_seq, hidden)
@@ -186,6 +233,8 @@ class EncoderRNN(pl.LightningModule):
 
 
 class DecoderRNN(pl.LightningModule):
+    """Decoder RNN for the Seq2Seq model."""
+
     def __init__(
         self,
         output_size=INPUT_DIM,
@@ -211,6 +260,7 @@ class DecoderRNN(pl.LightningModule):
         )
 
     def forward(self, input_step, hidden):
+        """Dims are given as comments in the code."""
         # input_step = (1, batch size, input dim)
         # Forward pass through RELU
         output = F.relu(input_step)
@@ -228,6 +278,8 @@ class DecoderRNN(pl.LightningModule):
 
 
 class Classifier(pl.LightningModule):
+    """Classifier for the Seq2Seq model."""
+
     def __init__(self, output_size=INPUT_DIM, hidden_size=HIDDEN_SIZE):
         super(Classifier, self).__init__()
         self.classifier = nn.Sequential(
@@ -250,11 +302,12 @@ class Seq2Seq(pl.LightningModule):
         encoder=EncoderRNN(),
         decoder=DecoderRNN(),
         classifier=Classifier(),
-        criterion=nn.BCELoss(),
+        criterion=Loss(type="focal"),
         learning_rate=LEARNING_RATE,
         batch_size=BATCH_SIZE,
-        n_training_steps=None,
+        threshold=THRESHOLD,
         teacher_forcing_ratio=0.5,
+        n_training_steps=None,
         decoder_n_layers=LAYERS,
         SOS_token=SOS_TOKEN,
         info=[],
@@ -267,6 +320,7 @@ class Seq2Seq(pl.LightningModule):
         self.criterion = criterion
         self.learning_rate = learning_rate
         self.batch_size = batch_size
+        self.threshold = threshold
         self.n_training_steps = n_training_steps
         self.teacher_forcing_ratio = teacher_forcing_ratio
         self.decoder_n_layers = decoder_n_layers
@@ -284,6 +338,7 @@ class Seq2Seq(pl.LightningModule):
     def forward(
         self, input_seq, target_seq, seq_len=SEQ_LEN, teacher_forcing_ratio=None
     ):
+        """Dims are given as comments in the code."""
         # input_seq = (batch size, seq len, input dim)
         teacher_forcing_ratio = teacher_forcing_ratio or self.teacher_forcing_ratio
 
@@ -336,7 +391,8 @@ class Seq2Seq(pl.LightningModule):
 
         # metrics
         loss = self.criterion(output_seq, train_target)
-        density = get_density(output_seq.detach().numpy())
+        # loss = focal_loss(output_seq, train_target)
+        density = get_density(output_seq, threshold=self.threshold)
         precision = get_precision(output_seq, train_target)
         recall = get_recall(output_seq, train_target)
 
@@ -444,6 +500,11 @@ class Seq2Seq(pl.LightningModule):
 
 
 def get_trainer(n_epochs=10, accelerator="gpu", log_n_steps=10, test=False):
+    """
+    Return a trainer object for training the model.
+    If test==True returns a trainer with a limited number of epochs and no
+    logging or checkpoints for testing purposes.
+    """
     if test:
         return pl.Trainer(
             accelerator=accelerator,
@@ -458,6 +519,7 @@ def get_trainer(n_epochs=10, accelerator="gpu", log_n_steps=10, test=False):
         monitor="train_loss",
         mode="min",
     )
+
     logger = TensorBoardLogger("lightning_logs", name="midi", default_hp_metric=True)
 
     trainer = pl.Trainer(
@@ -482,3 +544,37 @@ def get_precision(prediction, target, threshold=0.5):
         torch.mul(prediction_int.float(), target).float().sum()
         / prediction_int.float().sum()
     )
+
+
+def get_density(prediction, threshold=0.5):
+    prediction_int = (prediction > threshold).long()
+    return prediction_int.float().sum() / (
+        prediction_int.numel() / prediction_int.shape[-1]
+    )
+
+def focal_loss(outputs, targets, alpha=0.25, gamma=2, type="focal"):
+    assert type in ["focal", "focal+"], "type must be 'focal' or 'focal+'"
+    
+    if type == "focal":
+        BCE_loss = F.binary_cross_entropy(outputs, targets, reduction="none")
+        pt = torch.exp(-BCE_loss)  # prevents nans when probability 0
+        F_loss = alpha * (1 - pt) ** gamma * BCE_loss
+        return F_loss.mean()
+
+    if type == "focal+":
+        outputs = torch.sigmoid(outputs)
+        targets = targets.type_as(outputs)
+
+        non_background_mask = targets != 0
+        targets = targets[non_background_mask]
+        outputs = outputs[non_background_mask]
+
+        probabilities = outputs * targets + (1 - outputs) * (1 - targets)
+
+        alpha_factor = torch.ones_like(probabilities) * alpha
+        alpha_factor = torch.where(targets == 1, alpha_factor, 1 - alpha_factor)
+        focal_weight = torch.pow(1 - probabilities, gamma)
+
+        loss = -alpha_factor * focal_weight * torch.log(probabilities + 1e-8)
+
+        return torch.mean(loss)

@@ -32,6 +32,8 @@ NUM_WORKERS = 8
 DROP_OUT = 0.2
 SOS_TOKEN = torch.zeros(1, BATCH_SIZE, 88)
 THRESHOLD = 0.5
+GAMMA = 4  # 1
+ALPHA = 0.1  # 1e-6,
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -157,9 +159,33 @@ class MidiDataModule(pl.LightningDataModule):
 
 
 class Loss(nn.Module):
-    def __init__(self, gamma=1.0, alpha=1e-6, type="focal"):
+    """
+    A class to compute the loss function.
+
+    Has three types: "bce", "focal", "focal+"
+
+    gamma: focal loss power parameter, that controls how easy examples are
+    down-weighted and is indicated by a float scalar. 'When gamma = 0, FL is
+    equivalent to CE, and as gamma is increased the effect of the modulating
+    factor is likewise increased (we found gamma = 2 to work best in our
+    experiments).'
+
+    alpha [0, 1]: The alpha parameter controls the weight of classes in the
+    loss function and is indicated by a float scalar. alpha=1 means that all
+    classes are weighted equally. Alpha balances the importance of
+    positive/negative examples
+
+    see: https://arxiv.org/pdf/1708.02002.pdf
+    """
+
+    # alpha=1e-6, gamma=1
+    def __init__(self, gamma=GAMMA, alpha=ALPHA, type="focal"):
         super(Loss, self).__init__()
-        assert type in ["focal", "focal+", "bce"], "type must be 'focal' or 'bce'"
+        assert type in [
+            "bce",
+            "focal",
+            "focal+",
+        ], "type must be 'bce', 'focal' or 'bce'"
         self.gamma = torch.tensor(gamma, dtype=torch.float32)
         self.alpha = alpha
         self.type = type
@@ -302,7 +328,9 @@ class Seq2Seq(pl.LightningModule):
         encoder=EncoderRNN(),
         decoder=DecoderRNN(),
         classifier=Classifier(),
-        criterion=Loss(type="focal"),
+        criterion="focal",
+        gamma=GAMMA,
+        alpha=ALPHA,
         learning_rate=LEARNING_RATE,
         batch_size=BATCH_SIZE,
         threshold=THRESHOLD,
@@ -317,7 +345,9 @@ class Seq2Seq(pl.LightningModule):
         self.encoder = encoder
         self.decoder = decoder
         self.classifier = classifier
-        self.criterion = criterion
+        self.gamma = gamma
+        self.alpha = alpha
+        self.criterion = Loss(gamma=self.gamma, alpha=self.alpha, type=criterion)
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.threshold = threshold
@@ -328,7 +358,7 @@ class Seq2Seq(pl.LightningModule):
         self.info = info  # for logging
 
         self.save_hyperparameters(
-            ignore=["encoder", "decoder", "classifier", "criterion", "SOS_token"]
+            ignore=["encoder", "decoder", "classifier", "SOS_token"]
         )
 
         assert (
@@ -552,9 +582,10 @@ def get_density(prediction, threshold=0.5):
         prediction_int.numel() / prediction_int.shape[-1]
     )
 
+
 def focal_loss(outputs, targets, alpha=0.25, gamma=2, type="focal"):
     assert type in ["focal", "focal+"], "type must be 'focal' or 'focal+'"
-    
+
     if type == "focal":
         BCE_loss = F.binary_cross_entropy(outputs, targets, reduction="none")
         pt = torch.exp(-BCE_loss)  # prevents nans when probability 0

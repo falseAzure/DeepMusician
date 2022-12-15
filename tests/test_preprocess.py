@@ -6,13 +6,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from deepmusician.utils_music21 import (
-    df_to_pianorolls,
-    get_notes_np_from_files,
-    meta_dict_to_df,
-    notes_np_to_df,
-    process_midi_files,
-)
+from deepmusician.utils_music21 import (df_to_pianorolls,
+                                        get_notes_np_from_files,
+                                        meta_dict_to_df, notes_np_to_df,
+                                        process_midi_files)
 
 
 # Fixtures

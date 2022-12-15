@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+DIVISION = 1 / 16
+
 
 def get_notes_np_from_instrument(instrument):
     """
@@ -136,7 +138,7 @@ def get_notes_np_from_files(midi_files: list):
 
 def notes_np_to_df(notes_np):
     """
-    Transforms a 2D numpy array of notes into a pandas dataframe.
+    Transforms a 2D numpy array of notes into a pandas DataFrame.
 
     Args:
         notes_np (numpy.array): 2D numpy array of notes (n_notes, 6). Usually
@@ -162,7 +164,7 @@ def notes_np_to_df(notes_np):
 
 
 def meta_dict_to_df(meta_dict):
-    """Transforms a dictionary of meta information into a pandas dataframe."""
+    """Transforms a dictionary of meta information into a pandas DataFrame."""
     file_id = []
     midi_name = []
     ins_program = []
@@ -185,7 +187,7 @@ def meta_dict_to_df(meta_dict):
     return meta_df
 
 
-def df_track_to_pianoroll(notes_df, division=1 / 16):
+def df_track_to_pianoroll(notes_df, division=DIVISION):
     """
     Transforms a track (represented by a DataFrame of notes) into a 2D numpy
     (track length, 88), that represents a pianoroll. The first dimension
@@ -216,7 +218,7 @@ def df_track_to_pianoroll(notes_df, division=1 / 16):
     return pianoroll
 
 
-def df_to_pianorolls(notes_df, division=1 / 16):
+def df_to_pianorolls(notes_df, division=DIVISION):
     """
     Transforms a DataFrame of notes into a list of pianorolls. Its a wrapper
     of df_track_to_pianoroll that iterates over all the tracks of the
@@ -230,7 +232,7 @@ def df_to_pianorolls(notes_df, division=1 / 16):
     return pianorolls
 
 
-def process_midi_files(midi_files=list, division=1 / 16):
+def process_midi_files(midi_files=list, division=DIVISION):
     """
     Wrapper of the functions to process a list of midi files. It returns a list
     of pianorolls, a DataFrame of notes and a DataFrame of meta information.
@@ -247,7 +249,7 @@ def get_density(pianoroll):
     return pianoroll.sum() / len(pianoroll)
 
 
-def plot_pianoroll(pianoroll, length=128, division=1 / 16):
+def plot_pianoroll(pianoroll, length=128, division=DIVISION):
     """
     Plot a pianoroll as a heatmap, that depicts the notes played at each
     time step. Division is the granularity/division to subdivide each bar.
@@ -279,7 +281,7 @@ def plot_pianoroll(pianoroll, length=128, division=1 / 16):
     plt.show()
 
 
-def pianoroll_to_note(pianoroll, division=1 / 16):
+def pianoroll_to_note(pianoroll, division=DIVISION):
     """
     Backtransform a pianoroll into a list of music21 notes. Division is the
     granularity/division to subdivide each bar.
@@ -335,15 +337,14 @@ def notes_to_midi(music21_notes, save=None):
     return midi_stream
 
 
-def pianoroll_to_midi(pianoroll, division=1 / 16, save=None):
+def pianoroll_to_midi(pianoroll, division=DIVISION, save=None):
     """Wrapper of pianoroll_to_note and notes_to_midi."""
     music21_notes = pianoroll_to_note(pianoroll, division)
     return notes_to_midi(music21_notes, save)
 
 
-def pianoroll_to_df(pianoroll):
+def pianoroll_to_df(pianoroll, division=DIVISION):
     """Backtransform a pianoroll into a DataFrame of notes."""
-    division = 1 / 16
     notes_df = pd.DataFrame(pianoroll, columns=["note" + str(i) for i in range(88)])
     notes_df["id"] = notes_df.index
     notes_df = pd.wide_to_long(notes_df, stubnames=["note"], i="id", j="p")

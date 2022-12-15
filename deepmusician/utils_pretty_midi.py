@@ -158,3 +158,6 @@ def play_midi(midi_file):
     """Plays a midi file in a jupyter notebook."""
     pmidi = pm.PrettyMIDI(midi_file)
     return IPython.display.Audio(pmidi.synthesize(fs=16000), rate=16000)
+
+
+# TODO write a function, that plays a piano roll

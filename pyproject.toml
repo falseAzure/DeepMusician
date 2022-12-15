@@ -1,5 +1,5 @@
 [project]
-name = "DeepMusician"
+name = "deepmusician"
 authors = [{ author = "Fabian Gabelberger", email = "falseazure@proton.me" }]
 version = "0.0.1"
 readme = "README.md"
@@ -40,7 +40,7 @@ classifiers = [
 ]
 
 [tool.setuptools]
-py-modules = []
+packages = ["deepmusician"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"

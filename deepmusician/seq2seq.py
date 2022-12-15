@@ -306,8 +306,8 @@ class Seq2Seq(pl.LightningModule):
 
     def __init__(
         self,
-        encoder=EncoderRNN(),
-        decoder=DecoderRNN(),
+        encoder=None,
+        decoder=None,
         classifier=Classifier(),
         criterion=CRITERION,
         gamma=GAMMA,
@@ -322,8 +322,8 @@ class Seq2Seq(pl.LightningModule):
     ):
         super(Seq2Seq, self).__init__()
 
-        self.encoder = encoder
-        self.decoder = decoder
+        self.encoder = encoder or EncoderRNN()
+        self.decoder = decoder or DecoderRNN(batch_size=batch_size)
         self.classifier = classifier
         self.gamma = gamma
         self.alpha = alpha
@@ -343,7 +343,7 @@ class Seq2Seq(pl.LightningModule):
         )
 
         assert (
-            encoder.hidden_size == decoder.hidden_size
+            self.encoder.hidden_size == self.decoder.hidden_size
         ), "Hidden dimensions of encoder and decoder must be equal!"
 
     def forward(
@@ -376,6 +376,10 @@ class Seq2Seq(pl.LightningModule):
         # hidden state and sequentially predicting the next note
         # It is important to note that the decoder only deals with one input
         # sequence at a time, NOT an entire sequence.
+        # TODO: with bigger batch size, this might be a problem, since the
+        # decoder gets the hidden state from the encoder, which might have a
+        # different batch size in the last step, due to insufficient data.
+        # Expected hidden size [2, batch_size, 512], got [2, x, 512]
         for t in range(seq_len):
             # Forward pass through decoder to obtain output and hidden state
             # for the next time/sequence step

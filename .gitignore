@@ -148,3 +148,4 @@ tests/test.ipynb
 checkpoints/
 lightning_logs/
 deepmusician/old/
+generated_seq/

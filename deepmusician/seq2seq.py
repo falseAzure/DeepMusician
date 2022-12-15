@@ -25,10 +25,10 @@ DROP_OUT = 0.2
 TEACHER_FORCING_RATIO = 0.5
 N_WORKERS = 8
 CRITERION = "focal"
-GAMMA = 4  # 1
-ALPHA = 0.1  # 1e-6,
+GAMMA = 2  # 1
+ALPHA = 0.00001  # 1e-6,
 THRESHOLD = 0.5
-SOS_TOKEN = torch.zeros(1, BATCH_SIZE, 88)
+SOS_TOKEN = torch.zeros(1, BATCH_SIZE, INPUT_DIM)
 ACCELERATOR = "cpu"
 
 
@@ -227,7 +227,7 @@ class EncoderRNN(pl.LightningModule):
 
     def forward(self, input_seq, hidden=None):
         """Dims are given as comments in the code."""
-        # input_seq = (batch size, seq len, input dim)
+        # input_seq = [batch size, seq len, input dim]
         # Forward pass through GRU
         outputs, hidden = self.gru(input_seq, hidden)
         # Sum bidirectional GRU outputs
@@ -235,8 +235,8 @@ class EncoderRNN(pl.LightningModule):
         # ,self.hidden_size:]
 
         return outputs, hidden
-        # outputs = (batch size, seq len, hidden size)
-        # hidden = (num layers, seq len, hidden size)
+        # outputs = [batch size, seq len, hidden size]
+        # hidden = [num layers, seq len, hidden size]
 
 
 class DecoderRNN(pl.LightningModule):
@@ -268,14 +268,14 @@ class DecoderRNN(pl.LightningModule):
 
     def forward(self, input_step, hidden):
         """Dims are given as comments in the code."""
-        # input_step = (1, batch size, input dim)
+        # input_step = [1, batch size, input dim]
         # Forward pass through RELU
         output = F.relu(input_step)
         # Forward through unidirectional GRU
         output, hidden = self.gru(output, hidden)
         return output, hidden
-        # outputs = (1, batch size, hidden size)
-        # hidden = (num layers, batch size, hidden size)
+        # outputs = [1, batch size, hidden size]
+        # hidden = [num layers, batch size, hidden size]
 
     def init_hidden_zeros(self):
         return torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
@@ -317,7 +317,7 @@ class Seq2Seq(pl.LightningModule):
         threshold=THRESHOLD,
         teacher_forcing_ratio=TEACHER_FORCING_RATIO,
         n_training_steps=None,
-        SOS_token=SOS_TOKEN,
+        SOS_token=None,
         info=[],
     ):
         super(Seq2Seq, self).__init__()
@@ -333,7 +333,9 @@ class Seq2Seq(pl.LightningModule):
         self.threshold = threshold
         self.n_training_steps = n_training_steps
         self.teacher_forcing_ratio = teacher_forcing_ratio
-        self.SOS_token = SOS_token  # Start of sequence token
+        self.SOS_token = SOS_token or torch.zeros(
+            1, self.batch_size, INPUT_DIM
+        )  # Start of sequence token
         self.info = info  # for logging
 
         self.save_hyperparameters(
@@ -348,7 +350,7 @@ class Seq2Seq(pl.LightningModule):
         self, input_seq, target_seq, seq_len=SEQ_LEN, teacher_forcing_ratio=None
     ):
         """Dims are given as comments in the code."""
-        # input_seq = (batch size, seq len, input dim)
+        # input_seq = [batch size, seq len, input dim]
         teacher_forcing_ratio = teacher_forcing_ratio or self.teacher_forcing_ratio
 
         # zero padding the input sequence for the encoder.
@@ -359,7 +361,7 @@ class Seq2Seq(pl.LightningModule):
         # target_zeros = torch.zeros(target_seq.shape[0], 1, target_seq.shape[2])
         # target_seq = torch.cat([target_zeros, target_seq], dim=1)
 
-        # Forward input through encoder model
+        # Forward entire sequence through encoder model.
         encoder_outputs, encoder_hidden = self.encoder(input_seq)
         # encoder_hidden = (num layers, seq len, hidden size)
         # Prepare encoder's final hidden layer to be first hidden input to the decoder
@@ -369,10 +371,17 @@ class Seq2Seq(pl.LightningModule):
         # initialize output vector
         output_seq = torch.zeros(seq_len, self.batch_size, self.decoder.output_size)
 
+        # Iterate through the sequence length by starting with the SOS-Token:
+        # then using the previous output and hidden state as new input and
+        # hidden state and sequentially predicting the next note
+        # It is important to note that the decoder only deals with one input
+        # sequence at a time, NOT an entire sequence.
         for t in range(seq_len):
+            # Forward pass through decoder to obtain output and hidden state
+            # for the next time/sequence step
             decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
-            # decoder_output = (1, batch size, output dim) = 1 step
-            # decoder_hidden = (num layers, seq len, hidden size)
+            # decoder_output = [1, batch size, output dim] = 1 step
+            # decoder_hidden = [num layers, seq len, hidden size]
 
             # run through classifier
             classifier_output = self.classifier(decoder_output)
@@ -380,7 +389,8 @@ class Seq2Seq(pl.LightningModule):
             # add output of decoder to output_seq
             output_seq[t] = classifier_output
 
-            # teacher forcing
+            # teacher forcing:
+            # 1 = use target as next input, 0 = use output as next input
             teacher_force = random.random() < teacher_forcing_ratio
             decoder_input = (
                 target_seq.transpose(0, 1)[t, :, :].unsqueeze(0)
@@ -389,8 +399,8 @@ class Seq2Seq(pl.LightningModule):
             )
 
         return {"output_seq": output_seq.transpose(0, 1), "target_seq": target_seq}
-        # output_seq = (seq_len, batch size, input dim)
-        # transposed = (batch size, seq_len, input dim)
+        # output_seq = [seq_len, batch size, input dim]
+        # transposed = [batch size, seq_len, input dim]
 
     def training_step(self, batch, batch_idx):
         train_source = batch[0]
@@ -432,7 +442,20 @@ class Seq2Seq(pl.LightningModule):
         targets = torch.stack(targets, dim=0).reshape(-1, 88)
         precision = get_precision(predictions, targets)
         recall = get_recall(predictions, targets)
-        print("Precision: ", precision, " - Recall: ", recall)
+
+        # generate sequence and get density
+        seq = self.generate_sequence()
+        seq_dens = seq.sum() / len(seq)
+        self.log("gen_seq_dens", seq_dens, prog_bar=True, logger=True)
+        print(
+            "Precision: ",
+            round(precision.item(), 4),
+            " - Recall: ",
+            round(recall.item(), 4),
+            " - Density: ",
+            round(seq_dens, 0),
+            sep="",
+        )
 
     def test_step(self, batch, batch_idx):
         train_source = batch[0]
@@ -466,14 +489,16 @@ class Seq2Seq(pl.LightningModule):
     def generate_sequence(
         self,
         init_hidden="guided",
-        init_seq=torch.zeros(SEQ_LEN, INPUT_DIM),  # init_seq = (seq len, input dim)
         seq_len=96,
         threshold=0.5,
+        init_seq=torch.zeros(SEQ_LEN, INPUT_DIM),  # init_seq = [seq len, input dim]
     ):
         """
         Method to generate a sequence of notes via the decoder and
         classifier from a hidden state, that is either only zeros, randomly
         initialised or derived from the (trained) encoder model.
+        The init sequence can be used to initialise the hidden state of the
+        decoder and to generate the first note of the sequence.
         """
         assert init_hidden in [
             "zero",
@@ -495,6 +520,9 @@ class Seq2Seq(pl.LightningModule):
         # initialize output vector
         output_seq = torch.zeros(seq_len, self.decoder.output_size)
 
+        # Iterate through the sequence length by starting with the SOS-Token:
+        # then using the previous output and hidden state as new input and
+        # hidden state and sequentially predicting the next note
         for t in range(seq_len):
             # run through decoder
             decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
@@ -505,7 +533,7 @@ class Seq2Seq(pl.LightningModule):
 
         output_seq = (output_seq > threshold).int()
         return output_seq.detach().numpy()
-        # output_seq = (seq_len, input dim)
+        # output_seq = [seq_len, input dim]
 
 
 def get_trainer(n_epochs=N_EPOCHS, accelerator=ACCELERATOR, log_n_steps=10, test=False):
@@ -522,14 +550,16 @@ def get_trainer(n_epochs=N_EPOCHS, accelerator=ACCELERATOR, log_n_steps=10, test
 
     checkpoint_callback = ModelCheckpoint(
         dirpath="checkpoints",
-        filename="best-checkpoint",
-        save_top_k=1,
+        filename="{epoch}-{train_loss:.10f}",
+        save_top_k=3,
         verbose=True,
         monitor="train_loss",
         mode="min",
+        every_n_epochs=1,
+        # save_on_train_epoch_end=True,
     )
 
-    logger = TensorBoardLogger("lightning_logs", name="midi", default_hp_metric=True)
+    logger = TensorBoardLogger("lightning_logs", default_hp_metric=True)
 
     trainer = pl.Trainer(
         logger=logger,

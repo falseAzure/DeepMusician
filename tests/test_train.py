@@ -1,17 +1,14 @@
 """
 Tests for training pipeline
 """
-# import sys
-
-# sys.path.append("deepmusician/")
-# sys.path.append("../deepmusician/")
 from pathlib import Path
 
 import pytest
-from seq2seq import MidiDataModule, Seq2Seq, get_trainer
-from utils_music21 import process_midi_files
 
-DIV = 1 / 4
+from deepmusician.seq2seq import MidiDataModule, Seq2Seq, get_trainer
+from deepmusician.utils_music21 import process_midi_files
+
+DIVISION = 1 / 4
 
 
 @pytest.fixture(scope="session")
@@ -24,7 +21,7 @@ def get_midi_files():
 @pytest.fixture(scope="session")
 def get_pianorolls(get_midi_files):
     files = get_midi_files
-    pianorolls, _, _ = process_midi_files(files[:1], division=DIV)
+    pianorolls, _, _ = process_midi_files(files[:1], division=DIVISION)
     return pianorolls
 
 
@@ -42,7 +39,7 @@ def get_datamodule(get_pianorolls):
 def get_model(get_datamodule):
     datamodule = get_datamodule
     s2s = Seq2Seq(
-        n_training_steps=len(datamodule.train_dataloader()), info={"div": DIV}
+        n_training_steps=len(datamodule.train_dataloader()), info={"div": DIVISION}
     )
     return s2s
 
@@ -54,12 +51,12 @@ def get_trainer_pytest():
 
 def test_model(get_model):
     model = get_model
-    assert model is not None
+    assert model is not None, "Model is None"
 
 
 def test_trainer(get_trainer_pytest):
     trainer = get_trainer_pytest
-    assert trainer is not None
+    assert trainer is not None, "Trainer is None"
 
 
 def test_training(get_model, get_datamodule, get_trainer_pytest):
@@ -67,4 +64,4 @@ def test_training(get_model, get_datamodule, get_trainer_pytest):
     datamodule = get_datamodule
     trainer = get_trainer_pytest
     trainer.fit(model, datamodule)
-    assert trainer is not None
+    assert trainer is not None, "Training failed"

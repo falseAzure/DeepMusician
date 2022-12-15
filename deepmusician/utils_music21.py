@@ -324,23 +324,26 @@ def pianoroll_to_note(pianoroll, division=DIVISION):
     return music21_notes
 
 
-def notes_to_midi(music21_notes, save=None):
+def notes_to_midi(music21_notes):
     """
     Backtransforms a list of music21 notes into a midi file.
     """
     midi_stream = music21.stream.Stream(
         music21_notes, timeSignature=music21.meter.TimeSignature("4/4")
     )
-    if save is not None:
-        print("Saving midi file to {}".format(save))
-        midi_stream.write("midi", fp=save)
     return midi_stream
+
+
+def save_midi(midi_stream, path=None):
+    if path is not None:
+        print("Saving midi file to {}".format(path))
+        midi_stream.write("midi", fp=path)
 
 
 def pianoroll_to_midi(pianoroll, division=DIVISION, save=None):
     """Wrapper of pianoroll_to_note and notes_to_midi."""
     music21_notes = pianoroll_to_note(pianoroll, division)
-    return notes_to_midi(music21_notes, save)
+    return notes_to_midi(music21_notes)
 
 
 def pianoroll_to_df(pianoroll, division=DIVISION):

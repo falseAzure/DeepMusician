@@ -26,3 +26,7 @@ To download the files into the corresponding folders please run:
 ```bash
 bash data/download.sh
 ```
+
+Since the databases are quite big, it might be useful to simply download a
+smaller sample. To do so please copy the corresponding part in the
+```data/download.sh```and execute it in the bash.

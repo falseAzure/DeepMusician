@@ -63,6 +63,7 @@ class MidiDataset(data.Dataset):
     Stacks the list of pianorolls into a single tensor of shape (n_steps, 88).
     Removes leading and trailing zeros - and if remove_zeros is True - also
     empty time steps.
+    Each track is padded at the end to be a multiple of seq_len.
     """
 
     def __init__(self, pianorolls: list, seq_len=96, remove_zeros=False):
@@ -136,17 +137,26 @@ class MidiDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(
-            self.train_dataset, batch_size=self.batch_size, num_workers=N_WORKERS
+            self.train_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=N_WORKERS,
         )
 
     def test_dataloader(self):
         return DataLoader(
-            self.test_dataset, batch_size=self.batch_size, num_workers=N_WORKERS
+            self.test_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=N_WORKERS,
         )
 
     def predict_dataloader(self):
         return DataLoader(
-            self.test_dataset, batch_size=self.batch_size, num_workers=N_WORKERS
+            self.test_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=N_WORKERS,
         )
 
     def get_batch(self):
@@ -376,6 +386,7 @@ class Seq2Seq(pl.LightningModule):
         # hidden state and sequentially predicting the next note
         # It is important to note that the decoder only deals with one input
         # sequence at a time, NOT an entire sequence.
+
         # TODO: with bigger batch size, this might be a problem, since the
         # decoder gets the hidden state from the encoder, which might have a
         # different batch size in the last step, due to insufficient data.
@@ -390,7 +401,7 @@ class Seq2Seq(pl.LightningModule):
             # run through classifier
             classifier_output = self.classifier(decoder_output)
 
-            # add output of decoder to output_seq
+            # add output of decoder to generated output_seq > accumulate notes
             output_seq[t] = classifier_output
 
             # teacher forcing:

@@ -57,6 +57,7 @@ def get_train_test(pianorolls: list, train=0.8):
     )
 
 
+# TODO: adjust length of track to be a multiple of batch_size
 class MidiDataset(data.Dataset):
     """
     Dataset Class for MIDI files.
@@ -88,13 +89,15 @@ class MidiDataset(data.Dataset):
             )
             tracks.append(track)
 
-        tracks = torch.cat(tracks, dim=0)
-        assert len(tracks) % seq_len == 0, "tracks must be a multiple of seq_len"
+        single_track = torch.cat(tracks, dim=0)
+        assert len(single_track) % seq_len == 0, "tracks must be a multiple of seq_len"
 
-        self.notes = tracks
+        self.notes = single_track
         self.seq_len = seq_len
 
     def __getitem__(self, index):
+        # TODO: only iterate over sequences, not over every slice in the whole track
+        # Can be done by iterating over range(0, len(self.notes), self.seq_len)
         """
         Select sample: get a sequence of notes that is 2*seq_len long and split
         it into two sequences of length seq_len: first sequence is the input,
@@ -212,7 +215,10 @@ class Loss(nn.Module):
 
 
 class EncoderRNN(pl.LightningModule):
-    """Encoder RNN for the Seq2Seq model."""
+    """
+    Encoder RNN for the Seq2Seq model.
+    Uses a GRU architecture for sequence awareness.
+    """
 
     def __init__(
         self,
@@ -231,7 +237,7 @@ class EncoderRNN(pl.LightningModule):
             input_size,
             hidden_size,
             num_layers=num_layers,
-            batch_first=True,
+            batch_first=True,  # due to shape of input_seq
             dropout=self.dropout,
         )
 
@@ -250,7 +256,10 @@ class EncoderRNN(pl.LightningModule):
 
 
 class DecoderRNN(pl.LightningModule):
-    """Decoder RNN for the Seq2Seq model."""
+    """
+    Decoder RNN for the Seq2Seq model.
+    Uses a GRU architecture for sequence awareness.
+    """
 
     def __init__(
         self,
@@ -272,7 +281,7 @@ class DecoderRNN(pl.LightningModule):
             output_size,
             hidden_size,
             num_layers=num_layers,
-            batch_first=False,
+            batch_first=False,  # to better stack the output steps
             dropout=self.dropout,
         )
 
@@ -304,7 +313,7 @@ class Classifier(pl.LightningModule):
             nn.ReLU(),
             nn.Dropout(0.5),
             nn.Linear(256, output_size),
-            nn.Sigmoid(),
+            nn.Sigmoid(),  # bring output to [0,1]
         )
 
     def forward(self, x):
@@ -387,7 +396,6 @@ class Seq2Seq(pl.LightningModule):
         # It is important to note that the decoder only deals with one input
         # sequence at a time, NOT an entire sequence.
 
-        # TODO: with bigger batch size, this might be a problem, since the
         # decoder gets the hidden state from the encoder, which might have a
         # different batch size in the last step, due to insufficient data.
         # Expected hidden size [2, batch_size, 512], got [2, x, 512]
@@ -425,7 +433,6 @@ class Seq2Seq(pl.LightningModule):
 
         # metrics
         loss = self.criterion(output_seq, train_target)
-        # loss = focal_loss(output_seq, train_target)
         density = get_density(output_seq, threshold=self.threshold)
         precision = get_precision(output_seq, train_target)
         recall = get_recall(output_seq, train_target)
@@ -514,6 +521,7 @@ class Seq2Seq(pl.LightningModule):
         initialised or derived from the (trained) encoder model.
         The init sequence can be used to initialise the hidden state of the
         decoder and to generate the first note of the sequence.
+        Output is a single sequence of notes of length seq_len.
         """
         assert init_hidden in [
             "zero",

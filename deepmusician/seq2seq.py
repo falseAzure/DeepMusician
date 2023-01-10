@@ -58,6 +58,7 @@ def get_train_test(pianorolls: list, train=0.8):
 
 
 # TODO: adjust length of track to be a multiple of batch_size
+# e.g. padding based on the batch_size
 class MidiDataset(data.Dataset):
     """
     Dataset Class for MIDI files.
@@ -97,7 +98,7 @@ class MidiDataset(data.Dataset):
 
     def __getitem__(self, index):
         # TODO: only iterate over sequences, not over every slice in the whole track
-        # Can be done by iterating over range(0, len(self.notes), self.seq_len)
+        # Can be done by iterating over range(0, len(self.notes), self.seq_len))
         """
         Select sample: get a sequence of notes that is 2*seq_len long and split
         it into two sequences of length seq_len: first sequence is the input,
@@ -120,7 +121,8 @@ class MidiDataModule(pl.LightningDataModule):
         split=0.8,
         seq_len=SEQ_LEN,
         batch_size=BATCH_SIZE,
-        remove_zeros=False,
+        remove_zeros=False,  # whether to remove empty time steps
+        num_workers=N_WORKERS,
     ):
         super().__init__()
         self.pianorolls = pianorolls
@@ -128,6 +130,7 @@ class MidiDataModule(pl.LightningDataModule):
         self.seq_length = seq_len
         self.batch_size = batch_size
         self.remove_zeros = remove_zeros
+        self.num_workers = num_workers
 
     def setup(self, stage=None):
         train, test, _, _ = get_train_test(self.pianorolls, train=self.split)
@@ -143,7 +146,7 @@ class MidiDataModule(pl.LightningDataModule):
             self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=N_WORKERS,
+            num_workers=self.num_workers,
         )
 
     def test_dataloader(self):
@@ -151,7 +154,7 @@ class MidiDataModule(pl.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=N_WORKERS,
+            num_workers=self.num_workers,
         )
 
     def predict_dataloader(self):
@@ -159,7 +162,7 @@ class MidiDataModule(pl.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=N_WORKERS,
+            num_workers=self.num_workers,
         )
 
     def get_batch(self):

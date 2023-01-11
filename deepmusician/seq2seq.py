@@ -68,7 +68,16 @@ class MidiDataset(data.Dataset):
     Each track is padded at the end to be a multiple of seq_len.
     """
 
-    def __init__(self, pianorolls: list, seq_len=96, remove_zeros=False):
+    def __init__(
+        self,
+        pianorolls: list,
+        seq_len=SEQ_LEN,
+        remove_zeros=False,
+        batch_size=BATCH_SIZE,
+    ):
+        self.seq_len = seq_len
+
+        self.batch_size = batch_size
         tracks = []
         for pianoroll in pianorolls:
 
@@ -91,10 +100,23 @@ class MidiDataset(data.Dataset):
             tracks.append(track)
 
         single_track = torch.cat(tracks, dim=0)
-        assert len(single_track) % seq_len == 0, "tracks must be a multiple of seq_len"
+        assert (
+            len(single_track) % seq_len == 0
+        ), "track length must be a multiple of seq_len"
+
+        # adjust length of track to be a multiple of batch_size
+        length_track = len(single_track) - self.seq_len * 2
+        if length_track % self.batch_size != 0:
+            short = self.batch_size - length_track % self.batch_size
+            single_track = torch.cat([single_track, torch.zeros(short, 88)], dim=0)
+            print("Padding: Adjusting length of track to be a multiple of batch_size")
+
+        assert (
+            len(single_track) - self.seq_len * 2
+        ) % self.batch_size == 0, "dataset length must be a multiple of batch_size"
 
         self.notes = single_track
-        self.seq_len = seq_len
+        print("Dataset: Length of track: ", len(self.notes))
 
     def __getitem__(self, index):
         # TODO: only iterate over sequences, not over every slice in the whole track
@@ -139,10 +161,16 @@ class MidiDataModule(pl.LightningDataModule):
         all_pianorolls = self.pianorolls
         train, test, _, _ = get_train_test(all_pianorolls, train=self.split)
         self.train_dataset = MidiDataset(
-            train, seq_len=self.seq_length, remove_zeros=self.remove_zeros
+            train,
+            seq_len=self.seq_length,
+            remove_zeros=self.remove_zeros,
+            batch_size=self.batch_size,
         )
         self.test_dataset = MidiDataset(
-            test, seq_len=self.seq_length, remove_zeros=self.remove_zeros
+            test,
+            seq_len=self.seq_length,
+            remove_zeros=self.remove_zeros,
+            batch_size=self.batch_size,
         )
 
     def train_dataloader(self):
@@ -200,7 +228,7 @@ class Loss(nn.Module):
             "bce",
             "focal",
             "focal+",
-        ], "type must be 'bce', 'focal' or 'bce'"
+        ], "type must be 'bce', 'focal' or 'focal+'"
         self.register_buffer("gamma", torch.tensor(gamma, dtype=torch.float32))
         self.alpha = alpha
         self.loss = loss
@@ -422,7 +450,9 @@ class Seq2Seq(pl.LightningModule):
         for t in range(seq_len):
             # Forward pass through decoder to obtain output and hidden state
             # for the next time/sequence step
+            # print(decoder_input.shape, decoder_hidden.shape)
             decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
+            # print(decoder_output.shape, decoder_hidden.shape)
             # decoder_output = [1, batch size, output dim] = 1 step
             # decoder_hidden = [num layers, seq len, hidden size]
 
@@ -531,9 +561,9 @@ class Seq2Seq(pl.LightningModule):
     def generate_sequence(
         self,
         init_hidden="guided",
-        seq_len=96,
+        seq_len=SEQ_LEN,
+        input_dim=INPUT_DIM,
         threshold=0.5,
-        init_seq=torch.zeros(SEQ_LEN, INPUT_DIM),  # init_seq = [seq len, input dim]
     ):
         """
         Method to generate a sequence of notes via the decoder and
@@ -548,6 +578,10 @@ class Seq2Seq(pl.LightningModule):
             "random",
             "guided",
         ], "init_hidden must be 'zero' 'random' or 'guided'"
+
+        init_seq = torch.zeros(seq_len, input_dim, device=self.device)
+        # init_seq = [seq len, input dim]
+
         if init_hidden == "zero":
             encoder_hidden = self.decoder.init_hidden_zeros()[:, 0, :]
         elif init_hidden == "random":
@@ -579,7 +613,13 @@ class Seq2Seq(pl.LightningModule):
         # output_seq = [seq_len, input dim]
 
 
-def get_trainer(n_epochs=N_EPOCHS, accelerator=ACCELERATOR, log_n_steps=10, test=False):
+def get_trainer(
+    n_epochs=N_EPOCHS,
+    accelerator=ACCELERATOR,
+    log_n_steps=10,
+    test=False,
+    **trainer_params
+):
     """
     Return a trainer object for training the model.
     If test==True returns a trainer with a limited number of epochs and no
@@ -599,6 +639,7 @@ def get_trainer(n_epochs=N_EPOCHS, accelerator=ACCELERATOR, log_n_steps=10, test
         monitor="train_loss",
         mode="min",
         every_n_epochs=1,
+        **trainer_params,
         # save_on_train_epoch_end=True,
     )
 

@@ -57,8 +57,6 @@ def get_train_test(pianorolls: list, train=0.8):
     )
 
 
-# TODO: adjust length of track to be a multiple of batch_size
-# e.g. padding based on the batch_size
 class MidiDataset(data.Dataset):
     """
     Dataset Class for MIDI files.
@@ -76,11 +74,10 @@ class MidiDataset(data.Dataset):
         batch_size=BATCH_SIZE,
     ):
         self.seq_len = seq_len
-
         self.batch_size = batch_size
         tracks = []
-        for pianoroll in pianorolls:
 
+        for pianoroll in pianorolls:
             # trim leading and trailing zeros
             nz = np.nonzero(pianoroll)[0]
             if remove_zeros:
@@ -102,18 +99,21 @@ class MidiDataset(data.Dataset):
         single_track = torch.cat(tracks, dim=0)
         assert (
             len(single_track) % seq_len == 0
-        ), "track length must be a multiple of seq_len"
+        ), "Track length must be a multiple of seq_len"
 
         # adjust length of track to be a multiple of batch_size
         length_track = len(single_track) - self.seq_len * 2
         if length_track % self.batch_size != 0:
             short = self.batch_size - length_track % self.batch_size
             single_track = torch.cat([single_track, torch.zeros(short, 88)], dim=0)
-            print("Padding: Adjusting length of track to be a multiple of batch_size")
+            print(
+                f"Padding ({short}): ",
+                "Adjusting length of dataset to be a multiple of batch_size",
+            )
 
         assert (
             len(single_track) - self.seq_len * 2
-        ) % self.batch_size == 0, "dataset length must be a multiple of batch_size"
+        ) % self.batch_size == 0, "Dataset length must be a multiple of batch_size"
 
         self.notes = single_track
         print("Dataset: Length of track: ", len(self.notes))
@@ -375,7 +375,7 @@ class Seq2Seq(pl.LightningModule):
         threshold=THRESHOLD,
         teacher_forcing_ratio=TEACHER_FORCING_RATIO,
         n_training_steps=None,
-        SOS_token=None,
+        sos_token=None,
         info=[],
     ):
         super(Seq2Seq, self).__init__()
@@ -392,17 +392,17 @@ class Seq2Seq(pl.LightningModule):
         self.n_training_steps = n_training_steps
         self.teacher_forcing_ratio = teacher_forcing_ratio
         # Start of sequence token
-        if SOS_token is None:
+        if sos_token is None:
             self.register_buffer(
-                "SOS_token", torch.zeros(1, self.batch_size, INPUT_DIM)
+                "sos_token", torch.zeros(1, self.batch_size, INPUT_DIM)
             )
         else:
-            self.register_buffer("SOS_token", SOS_token)
+            self.register_buffer("sos_token", sos_token)
 
         self.info = info  # for logging
 
         self.save_hyperparameters(
-            ignore=["encoder", "decoder", "classifier", "SOS_token"]
+            ignore=["encoder", "decoder", "classifier", "sos_token"]
         )
 
         assert (
@@ -422,7 +422,9 @@ class Seq2Seq(pl.LightningModule):
         )
         input_seq = torch.cat([input_zeros, input_seq], dim=1)
 
-        # zero padding the target sequence for the decoder.
+        # zero padding the target sequence for the decoder. (not necessary)
+        # because we start with a 0 vector as input, but don't need the
+        # the output to start with 0
         # target_zeros = torch.zeros(target_seq.shape[0], 1, target_seq.shape[2])
         # target_seq = torch.cat([target_zeros, target_seq], dim=1)
 
@@ -432,7 +434,7 @@ class Seq2Seq(pl.LightningModule):
         # Prepare encoder's final hidden layer to be first hidden input to the decoder
         decoder_hidden = encoder_hidden
         # Initialize decoder input
-        decoder_input = self.SOS_token
+        decoder_input = self.sos_token
         # initialize output vector
         output_seq = torch.zeros(
             seq_len, self.batch_size, self.decoder.output_size, device=self.device
@@ -593,7 +595,7 @@ class Seq2Seq(pl.LightningModule):
         # Prepare encoder's final hidden layer to be first hidden input to the decoder
         decoder_hidden = encoder_hidden
         # Initialize decoder input: one step single batch
-        decoder_input = self.SOS_token[:, 0, :]
+        decoder_input = self.sos_token[:, 0, :]
         # initialize output vector
         output_seq = torch.zeros(seq_len, self.decoder.output_size)
 
@@ -618,7 +620,7 @@ def get_trainer(
     accelerator=ACCELERATOR,
     log_n_steps=10,
     test=False,
-    **trainer_params
+    **trainer_params,
 ):
     """
     Return a trainer object for training the model.

@@ -132,8 +132,12 @@ class MidiDataModule(pl.LightningDataModule):
         self.remove_zeros = remove_zeros
         self.num_workers = num_workers
 
+    def prepare_data(self):
+        pass
+
     def setup(self, stage=None):
-        train, test, _, _ = get_train_test(self.pianorolls, train=self.split)
+        all_pianorolls = self.pianorolls
+        train, test, _, _ = get_train_test(all_pianorolls, train=self.split)
         self.train_dataset = MidiDataset(
             train, seq_len=self.seq_length, remove_zeros=self.remove_zeros
         )
@@ -197,7 +201,7 @@ class Loss(nn.Module):
             "focal",
             "focal+",
         ], "type must be 'bce', 'focal' or 'bce'"
-        self.gamma = torch.tensor(gamma, dtype=torch.float32)
+        self.register_buffer("gamma", torch.tensor(gamma, dtype=torch.float32))
         self.alpha = alpha
         self.loss = loss
 
@@ -279,7 +283,6 @@ class DecoderRNN(pl.LightningModule):
         self.hidden_size = hidden_size
         self.batch_size = batch_size
         self.dropout = dropout
-
         self.gru = nn.GRU(
             output_size,
             hidden_size,
@@ -293,6 +296,7 @@ class DecoderRNN(pl.LightningModule):
         # input_step = [1, batch size, input dim]
         # Forward pass through RELU
         output = F.relu(input_step)
+
         # Forward through unidirectional GRU
         output, hidden = self.gru(output, hidden)
         return output, hidden
@@ -300,10 +304,14 @@ class DecoderRNN(pl.LightningModule):
         # hidden = [num layers, batch size, hidden size]
 
     def init_hidden_zeros(self):
-        return torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
+        return torch.zeros(
+            self.num_layers, self.batch_size, self.hidden_size, device=self.device
+        )
 
     def init_hidden_random(self):
-        return torch.randn(self.num_layers, self.batch_size, self.hidden_size)
+        return torch.randn(
+            self.num_layers, self.batch_size, self.hidden_size, device=self.device
+        )
 
 
 class Classifier(pl.LightningModule):
@@ -355,9 +363,14 @@ class Seq2Seq(pl.LightningModule):
         self.threshold = threshold
         self.n_training_steps = n_training_steps
         self.teacher_forcing_ratio = teacher_forcing_ratio
-        self.SOS_token = SOS_token or torch.zeros(
-            1, self.batch_size, INPUT_DIM
-        )  # Start of sequence token
+        # Start of sequence token
+        if SOS_token is None:
+            self.register_buffer(
+                "SOS_token", torch.zeros(1, self.batch_size, INPUT_DIM)
+            )
+        else:
+            self.register_buffer("SOS_token", SOS_token)
+
         self.info = info  # for logging
 
         self.save_hyperparameters(
@@ -376,7 +389,9 @@ class Seq2Seq(pl.LightningModule):
         teacher_forcing_ratio = teacher_forcing_ratio or self.teacher_forcing_ratio
 
         # zero padding the input sequence for the encoder.
-        input_zeros = torch.zeros(input_seq.shape[0], 1, input_seq.shape[2])
+        input_zeros = torch.zeros(
+            input_seq.shape[0], 1, input_seq.shape[2], device=self.device
+        )
         input_seq = torch.cat([input_zeros, input_seq], dim=1)
 
         # zero padding the target sequence for the decoder.
@@ -391,7 +406,9 @@ class Seq2Seq(pl.LightningModule):
         # Initialize decoder input
         decoder_input = self.SOS_token
         # initialize output vector
-        output_seq = torch.zeros(seq_len, self.batch_size, self.decoder.output_size)
+        output_seq = torch.zeros(
+            seq_len, self.batch_size, self.decoder.output_size, device=self.device
+        )
 
         # Iterate through the sequence length by starting with the SOS-Token:
         # then using the previous output and hidden state as new input and

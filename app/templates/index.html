@@ -25,14 +25,14 @@
             <button type="submit" class="btn btn-primary btn-block btn-large">Generate</button>
         </form>
         </div>
-        <p>{{ prediction_text }}</p>
+        <!-- <p>{{ prediction_text }}</p> -->
 
         <midi-player src="data:audio/midi;base64, {{ midi }}" sound-font
-            visualizer="#myPianoRollVisualizer", alt="">
+            visualizer="#myPianoRollVisualizer" alt="">
         </midi-player>
         
         <midi-visualizer type="piano-roll" id="myPianoRollVisualizer"
-            src="data:audio/midi;base64, {{ midi }}">
+            src="data:audio/midi;base64, {{ midi }}" alt="">
         </midi-visualizer>
         <br>
         <!-- <img src="data:image/png;base64, {{ img }}" width="100%" alt=""> -->

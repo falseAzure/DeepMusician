@@ -20,17 +20,19 @@
 
         <!-- Main Input For Receiving Query to our ML -->
         <div style="padding-right:30%; padding-left:30%">
-        <form action="{{ url_for('predict')}}" method="post">
+        <form action="{{ url_for('generate')}}" method="post">
             <input type="text" name="Sequence Length" placeholder="192" required="required" />
             <button type="submit" class="btn btn-primary btn-block btn-large">Generate</button>
         </form>
         </div>
-        <!-- <p>{{ prediction_text }}</p> -->
-
-        <midi-player src="data:audio/midi;base64, {{ midi }}" sound-font
+        <p>{{ generate_text }}</p>
+        
+        <!-- Midi playert -->
+        <midi-player id="midiPlayer" src="data:audio/midi;base64, {{ midi }}" sound-font
             visualizer="#myPianoRollVisualizer" alt="">
         </midi-player>
         
+        <!-- Midi visualizer -->
         <midi-visualizer type="piano-roll" id="myPianoRollVisualizer"
             src="data:audio/midi;base64, {{ midi }}" alt="">
         </midi-visualizer>
@@ -40,7 +42,20 @@
     
     <br>
 
+<!-- Midiplayer -->
 <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
+
+<!-- Script to hide player if no sequence is generated -->
+<script>
+    var midiPlayer = document.getElementById("midiPlayer");
+    var src = midiPlayer.getAttribute("src");
+    var base64Data = src.split(",")[1];
+    var midiData = atob(base64Data);
+    if (midiData.length > 10) {
+    } else {
+        midiPlayer.style.display = "none";
+    }
+</script>
 
 
 </body>

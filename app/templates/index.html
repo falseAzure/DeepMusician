@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<!--From https://codepen.io/frytyler/pen/EGdtg-->
+
+<head>
+    <meta charset="UTF-8">
+    <title>ML API</title>
+    <link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+    <div class="w3-center w3-container" style="padding-right:20%; padding-left:20%">
+        <h1>Generate your sequence</h1>
+
+        <!-- Main Input For Receiving Query to our ML -->
+        <div style="padding-right:30%; padding-left:30%">
+        <form action="{{ url_for('predict')}}" method="post">
+            <input type="text" name="Sequence Length" placeholder="192" required="required" />
+            <button type="submit" class="btn btn-primary btn-block btn-large">Generate</button>
+        </form>
+        </div>
+        <p>{{ prediction_text }}</p>
+
+        <midi-player src="data:audio/midi;base64, {{ midi }}" sound-font
+            visualizer="#myPianoRollVisualizer", alt="">
+        </midi-player>
+        
+        <midi-visualizer type="piano-roll" id="myPianoRollVisualizer"
+            src="data:audio/midi;base64, {{ midi }}">
+        </midi-visualizer>
+        <br>
+        <!-- <img src="data:image/png;base64, {{ img }}" width="100%" alt=""> -->
+    </div>
+    
+    <br>
+
+<script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
+
+
+</body>
+
+</html>

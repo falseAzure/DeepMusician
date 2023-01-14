@@ -249,7 +249,7 @@ def get_density(pianoroll):
     return pianoroll.sum() / len(pianoroll)
 
 
-def plot_pianoroll(pianoroll, length=128, division=DIVISION):
+def plot_pianoroll(pianoroll, length=128, division=DIVISION, return_plot=False):
     """
     Plot a pianoroll as a heatmap, that depicts the notes played at each
     time step. Division is the granularity/division to subdivide each bar.
@@ -265,7 +265,8 @@ def plot_pianoroll(pianoroll, length=128, division=DIVISION):
     x_notes = []
     for n in x:
         x_notes.append(str(music21.pitch.Pitch(n + 21)))
-    plt.figure(figsize=(12, 6))
+
+    fig, ax = plt.subplots(1, figsize=(12, 6))
     ax = sns.heatmap(
         data,
         cbar=False,
@@ -278,7 +279,13 @@ def plot_pianoroll(pianoroll, length=128, division=DIVISION):
     ax.invert_yaxis()
     plt.xlabel(str(division) + "Notes")
     plt.ylabel("Note")
-    plt.show()
+
+    if not return_plot:
+        plt.show()
+        return
+    else:
+        plt.close(fig)
+        return fig
 
 
 def pianoroll_to_note(pianoroll, division=DIVISION):
@@ -343,6 +350,8 @@ def save_midi(midi_stream, path=None):
 def pianoroll_to_midi(pianoroll, division=DIVISION, save=None):
     """Wrapper of pianoroll_to_note and notes_to_midi."""
     music21_notes = pianoroll_to_note(pianoroll, division)
+    if save is not None:
+        save_midi(notes_to_midi(music21_notes), save)
     return notes_to_midi(music21_notes)
 
 

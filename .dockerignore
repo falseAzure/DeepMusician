@@ -1,0 +1,12 @@
+.circleci/
+.pytest_cache/
+.tox/
+.vscode/
+build/
+checkpoints/
+data/
+deepmusicio.egg-info/
+generated_seq/
+lightning_logs/
+playaround/
+tests/

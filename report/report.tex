@@ -1,0 +1,390 @@
+%% Document Type
+\documentclass[a4paper, 10pt, xcolor=dvipsnames]{article} % use option titlepage to get the title on a page of its own.
+\pagenumbering{gobble} % define page numbering. [gobble] omits any numbering.
+
+%% Packages
+% Document Layout
+\usepackage[left=2.5cm,right=2.5cm,top=1.5cm,bottom=2cm]{geometry}   % to change margins
+\usepackage{titling}             % Uncomment both to   
+\setlength{\droptitle}{-2cm}     % change title position 
+\date{\vspace{-9ex}} % delete date - comment to insert date
+
+% Language
+\usepackage[greek,french,ngerman, english]{babel} % Change language \selectlanguage{languageA}. Last listed language defines document
+
+
+% Different font and encoding
+% \usepackage[LGR,T1]{fontenc} % Extended Cork (EC) fonts in T1 encoding contains letters and punctuation characters for most of the European languages using Latin script. see: https://tex.stackexchange.com/questions/664/why-should-i-use-usepackaget1fontenc
+\usepackage{lmodern} % Different font: better for accents and ß
+\usepackage[utf8]{inputenc} % Manages the input. The utf8 encoding used by inputenc only defines the characters that are actually provided by the fonts used.
+% \usepackage{tgbonum} % More fonts
+
+% Bibliography
+\usepackage[style=numeric-comp, sorting=none, url=true, eprint=false, isbn=false, backend=biber, citetracker=true]{biblatex} % biblatex package handling bibliography
+\bibliography{../../../../../Bibliography/bibliography.bib} % path of bibliography
+\usepackage[autostyle=tryonce]{csquotes} % used for quotes: use either /textquote{} or /blockcquote
+
+% Graphics
+\usepackage{graphicx}
+\graphicspath{ {img/} } % set the folder of the images
+% \includegraphics[options]{overleaf-logo}
+\usepackage{subcaption} % group images > Support for sub-captions
+\usepackage{wrapfig} % Produces figures which text can flow around
+
+
+% Caption of Floats (images, tables etc)
+\usepackage{caption}
+\captionsetup{justification   = raggedright,
+              singlelinecheck = false}
+% control space before and after image/table
+\setlength{\belowcaptionskip}{-20pt}
+\captionsetup{belowskip=0pt}
+
+
+% Highlighting
+\usepackage[dvipsnames]{xcolor} % for colors see: https://www.namsu.de/Extra/pakete/Xcolor.html and https://en.wikibooks.org/wiki/LaTeX/Colors 
+% \textcolor{color}{text}, \colorbox{color}{text}
+
+
+% References
+\usepackage{hyperref}
+% e.g.: \href{}{}
+\usepackage{cleveref} % more complex package to manage references - only works with numbered items
+% e.g. \label{itm:d1} > \cref{itm:d1}
+\hypersetup{
+    colorlinks = false,
+    linkbordercolor = {OliveGreen}
+}
+
+
+% Complex and long tables
+% https://tex.stackexchange.com/questions/35293/p-m-and-b-columns-in-tables
+% https://de.wikibooks.org/wiki/LaTeX-W%C3%B6rterbuch:_tabular
+\usepackage{longtable} % tabular for tables across multiple pages
+\usepackage{tabularx} % tabulars with flexible column width
+\usepackage{multicol} % multicolumn environment
+\usepackage{booktabs} % better looking tables
+
+
+% Design trees and forests
+\usepackage{tikz-qtree, tikz-qtree-compat} % https://www.bu.edu/math/files/2013/08/tikzpgfmanual.pdf
+\usetikzlibrary{positioning}
+\usepackage{forest}
+\usepackage{mdframed} % framed environments that can split at page boundaries
+
+
+% Packages to represent Code 
+% for algorithms
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+
+% continuation indent patch for algorithms
+\newlength{\continueindent}
+\setlength{\continueindent}{2em}
+\usepackage{etoolbox}
+\makeatletter
+\newcommand*{\ALG@customparshape}{\parshape 2 \leftmargin \linewidth \dimexpr\ALG@tlm+\continueindent\relax \dimexpr\linewidth+\leftmargin-\ALG@tlm-\continueindent\relax}
+\apptocmd{\ALG@beginblock}{\ALG@customparshape}{}{\errmessage{failed to patch}}
+
+
+% another packages for algorithms
+\usepackage{listings}
+\lstset{
+  language=SQL,
+  tabsize=3,
+  basicstyle=\small,
+  breaklines=true
+}
+% e.g. \begin{lstlisting} Code \end{lstlisting}
+
+% Abstract
+\renewenvironment{abstract}
+ {\small
+  \begin{center}
+  \bfseries \abstractname\vspace{-.5em}\vspace{0pt}
+  \end{center}
+  \list{}{
+    \setlength{\leftmargin}{3cm}%
+    \setlength{\rightmargin}{\leftmargin}%
+  }%
+  \item\relax}
+ {\endlist}
+
+
+%% Metadata 
+\title{Deep Musician
+\vspace{0.25em}
+\\ \large Automatic Generation using Deep Learning
+}
+\author{Fabian Gabelberger}
+\date{\today}
+
+
+%% Document
+\begin{document}
+\maketitle
+\vspace{2em}
+
+\begin{abstract}
+  The main idea of this project is to create a model that is capable of
+  automatically generating new and unheard musical melodies that resemble human
+  ones. This is achieved with a deep neural network that was trained with a
+  large amount existing MIDI files. The network uses a sequence aware
+  Encoder-Decoder structure that is capable of creating sequences of notes of
+  arbitrary length. The encoder and decoder each consist of a 2-layer GRU
+  network, whereas the decoder has an additional classifier.
+\end{abstract}
+
+\section{Introduction}
+With \emph{MuseNet OpenAI} created a deep neural network that
+\blockcquote{payne2019}{can generate 4-minute musical compositions with 10
+  different instruments, and can combine styles from country to Mozart to the
+  Beatles.} Behind this project resides the (philosophical) idea that musical
+compositions can arise not only from a particular (abstract) artistic
+understanding of harmony, rhythm, melody, etc., but also \emph{solely} from a
+variety of previous works that are incorporated into the new, unheard piece as
+a wealth of experience.
+
+MuseNet is fuelled by \blockcquote{payne2019}{"a large-scale \emph{transformer
+    model} trained to predict the next note(s) in a sequence.} While this
+approach using a transformer model is certainly state of the art for
+sequential data and produces a truly vibrant and rich musical style, it is
+very resource intensive and can thus -- simply due to hardware limitations
+-- not be the scope of a project for \emph{Applied} Deep Learning .
+
+In contrast, there are also more lightweight approaches that use a variety of
+RNN structures (such as LSTM models or RNN \cite{lewandowski2012,
+  jedrzejewska2018, hewahi2019, ycart2017, mangal2019} with Self-Attention
+\cite{jagannathan2022} and even a CNN \cite{yang2017} - which is quite
+interesting considering the temporal dimension of music that CNN are not
+designed to depict. (For a general overview of the different approaches of
+generative music models see: \cite{briot2017}.)
+
+\section{The Problem}
+\subsection{A philosophical Problem?}
+
+All these ideas try to solve the problem of how to outsource the creation of
+music -- which until now has always been in the hands of man -- to the machine.
+In terms of music history, this is not necessarily about creating original
+works that represent a new avant-garde in music. From a purely pragmatic point
+of view, such a model could rather offer musicians the possibility to
+complement their works (be it with certain instruments or as a source of ideas)
+or to generally grant artists access to freely available and and
+non-proprietary music in order to easily create background music for a video or
+other content, for example.
+
+At the bottom of this question itself, lies the problem of the creative and
+generative abilities of machines, algorithms, models etc. Since machines are
+said to produce merely repetitive patterns, it is hard to imagine how true
+creative output is to emerge from them. Yet the recent successes of deep
+(reinforcement) neural models\footnote{The creative/machine generation field
+  has gained tremendous traction through its successes in recent years, from
+  Deepmind's AlphaZero, which plays chess, Go, and Shogi, to various image
+  processing and generation software, to OpenAI's latest ChatBot. The list is
+  constantly being refreshed and expanded, and it seems we've only just exhausted
+  the first stages of machines' creative potential.} has shown, that the boundary
+between human and machine creation and creativity is getting ever thinner and
+thinner.\footnote{Especially if we acknowledge that the boundary between
+  repetition and creativity is not a strict criterion, but a fluid line, where
+  both sides are mutually dependent.}
+
+While I neither address nor answer these philosophical questions on a
+theoretical level in the project, I will make a first delicate attempt to
+explore machine-creative ways by means of a practical application. So the point
+is not to find a theoretical answer to the question of creativity, but to show
+by means of a practical application to what extent machine learning produces
+musical pieces that we as humans grasp as melodious, beautiful, and and
+ultimately human. Thus reformulating the former existential question to a
+rather categorical and technical one: How do the creations of machines differ
+from that of their human "counterparts" - and are we able to tell the
+difference?
+
+\subsection{The concrete problem}
+
+Concretely, i.e. looking at the practical application and thus at the field of
+computer science and artificial intelligence, the problem that such an
+algorithm needs to tackle is that it not only needs to make a prediction about
+the further course of a musical piece, but to design such a piece itself. While
+a large part of neural networks is trained to classify different things or to
+deliver the corresponding output for a given input (be it a classification, a
+translation or similar), this application is about \emph{creating} something
+("without" a corresponding input). In addition, musical pieces are sequences
+that have a temporal component at their core, i.e. their elements build on each
+other in time and do not exist synchronously or simultaneously in the moment.
+
+Two important elements that we therefore have to take into account when dealing
+with the topic of machine-generated music are:
+\begin{enumerate}
+  \item Sequence / temporal awareness
+  \item Generation instead of classification
+\end{enumerate}
+
+
+\section{Solution}
+The first point is solved by certain neural architectures (in particular RNN,
+LSTM and Attention Mechanism) that allow to integrate a temporal structure into
+the machine learning process. As a result, the individual training data are no
+longer (temporally) independent data points, but become a coherent sequence
+whose course has to be traced, i.e. learned, by the algorithm. The algorithm is
+given the steps in chronological order and its task is to correctly predict the
+next step in time. During training, the model learns to correctly continue the
+given sequences.
+
+The second step is approached by not continuing existing melodies correctly
+after training, but by animating the model to predict new (own) melodies. This
+is done by passing an empty input to the model on the basis of which the
+network predicts the temporally following second element and on the basis of
+these two elements the third and so on.
+
+
+In the introduction we have heard about different and very potent architectures
+that are sequence aware and capable of generation. Although I would have loved
+to implement an Attention Mechanism, I decided to start on a much smaller scale
+with a rather simple encoder-decoder architecture, that each consist auf a
+two-layered GRU structure. My project is thus dedicated to a small section of
+the topic of creative algorithms, namely the automatic generation of music, by
+implementing a sequence aware model, that is capable of generating musical
+sequences of arbitrary length.\footnote{I realize that I am only scratching the
+  surface of the issue given the incredibly vast and comprehensive models.}
+
+
+\section{Goal}
+The goal of the project is to create a model that produces melodies that sound
+human, or natural, i.e., not mechanical. Making this goal mathematically
+quantifiable is not trivial, since there are a variety of ways to represent
+notes and sequences of notes that each require different metrics. In addition
+most of these metrics are not able to capture the essence of a creative
+sequence of notes. Of course, there are metrics that describe how well an
+algorithm predicts a certain sequence, but as we will see below, these have
+weighty drawbacks. Therefore, I remain with the approach of measuring generated
+melodies according to simply my human ear.
+
+\section{Data Structure}
+
+\subsection{Representing Music}
+
+The basis of music is formed by sequentially played sounds or tones that can
+be represented as a complex \emph{waveform}. These individual sounds can be joined
+together in any way to form an entire piece of music, which in turn is again a
+single waveform that we can play back and listen to in different audio
+formats (MP3, FLAC, WAV etc.).
+
+\subsubsection{MIDI}
+
+While this form of representation already depicts a concrete shaping of the
+music in the form of an unique audio file, it is also possible to specify the
+individual tones of the piece in the form of notes with different parameters.
+The advantage here is that the concrete instrumentation is abstracted from and
+only the internal \emph{structure} of the piece is considered. The generally
+accepted standard for this representation is \emph{MIDI}. By means of MIDI it
+is possible to transmit not only the pitch and length of the individual notes,
+but also other parameters such as velocity - yet, no concrete waveform is
+produced.
+
+Thus, due to its abstract nature MIDI offers the possibility to extend the
+input of the model successively. While initially only monophonic audio tracks
+with constant dynamics and tone length are used, these parameters are to be
+successively added to the input to see how the created melodies change.
+
+\subsection{Preprocessing}
+However, neural networks cannot be trained with midi files themselves.
+Therefore, these must be converted into another form in which the notes can be
+passed to the network. There are a lot of possibilities for this, of which I
+have chosen a rather classical and simple one: The piano roll. Here a 2
+dimensional matrix is spanned, whose x-axis represents the time and whose
+y-axis represents the 88 notes of the piano. Each touch of a note is marked
+with 1 in the matrix at the corresponding time t - all other cells remain empty
+(0). This representation is very clear and intuitive. However, it has a big
+problem: since only a small percentage of the available cells are filled --
+i.e. most of the time NO note is played -- there is a big imbalance in the
+data.
+
+\section{Metric and Loss}
+Classical metrics have difficulty dealing with this problem and return
+suggestive and misleading values, while classical losses do not optimise for
+the desired goal, that is the generation of a human sounding melody.
+
+I faced this problem during the later stages of my experiment, when the model
+easily learned according to the classical BCE-loss, but afterwards during
+testing only generated empty melodies. This was due to the fact, that it
+actually guessed almost all of the notes correctly as they were not being
+played. So the empty sequence resembled the input it was given most of the
+time. Or put, differently the model was stuck in a local minimum.
+
+\subsection{Focal loss}
+
+I learned that image classification faces a similar problem and solves this by
+using a so called focal loss. Focal loss is a loss function that is used in
+image classification tasks, particularly those involving object detection. The
+main idea behind focal loss is to down-weight the contribution of easy examples
+in the training data and focus more on the hard examples, which are typically
+the ones that are more challenging to classify correctly. This is achieved by
+modifying the standard cross-entropy loss function by introducing a weighting
+term that increases the loss for easy examples and decreases the loss for hard
+examples. The result is a loss function that is more "focal" on the hard
+examples and helps the model to better learn from them and improve its
+performance on the task.
+
+With the introduction of focal loss in my model it started generating
+meaningful sequences of notes. To keep track of the validity of the generation
+of sequences I also introduced a density metric, that measures the average
+notes played per time step.
+
+Yet, the two parameters of the focal loss (alpha and gamma) need to be
+carefully adjusted to obtain meaningful results.
+
+
+\section{Architecture}
+\begin{itemize}
+  \item EncoderRNN: GRU(input: 88, hidden: 512, layers=2, dropout=0.2)
+  \item DecoderRNN: GRU(input: 88, hidden: 512, layers=2, dropout=0.2)
+  \item Classifier
+        \begin{itemize}
+          \item  Linear(in\_features=512, out\_features=256, bias=True)
+          \item  ReLU
+          \item  Dropout(p=0.5)
+          \item  Linear(in\_features=256, out\_features=88, bias=True)
+          \item  Sigmoid
+        \end{itemize}
+\end{itemize}
+
+\section*{Workload}
+\begin{tabular}{lrr}
+  Task                                           & estimated & actual \\
+  \hline
+  \hline
+  Dataset collection                             & 7         & 12     \\
+  Exploring, analysing and preparing data        & 12        & 45     \\
+  Designing and building an appropriate network  & 25        & 40     \\
+  Training and fine-tuning that network          & 15        & 15     \\
+  Building an application to present the results & 20        & 20     \\
+  Writing the final report                       & 8         & 6      \\
+  Preparing the presentation of your work        & 5         & 5
+\end{tabular}
+
+\pagebreak
+What is the problem that you tried to solve?
+Why is it a problem?
+What is your solution?
+Why is it a solution? (And in particular, why is or isn’t deep learning a solution?)
+
+Additionally, it should cover:
+
+- main insights (what improved what)
+- what would I do differently next time
+- time?
+- underestimated?
+
+The main take-aways and insights you gained from your project (e.g.,
+batch-normalization improved the results significantly, Adadelta worked much
+better than SGD on my data, annotating data works really good with tool X,
+setting up the pre-processing takes much more time than I expected, ...) If you
+would do the same project again, what - if anything - would you do differently?
+How much time did you spend on your project? How does the number compare to
+your initial estimate? If you underestimated any part, what were the reasons
+for this?
+
+\printbibliography
+
+\end{document}

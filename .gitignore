@@ -135,10 +135,14 @@ dmypy.json
 *.cwp
 *.zip
 *.aux
+*.bbl
+*.bcf
+*.blg
 *.fdb_latexmk
 *.fls
-*.out
 *.log
+*.out
+*.run.xml
 *.gz
 
 

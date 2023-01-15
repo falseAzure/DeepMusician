@@ -134,6 +134,12 @@ dmypy.json
 *.json
 *.cwp
 *.zip
+*.aux
+*.fdb_latexmk
+*.out
+*.log
+*.gz
+
 
 data/maestro/
 data/bitmidi/

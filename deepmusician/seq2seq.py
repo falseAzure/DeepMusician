@@ -581,6 +581,7 @@ class Seq2Seq(pl.LightningModule):
             "guided",
         ], "init_hidden must be 'zero' 'random' or 'guided'"
 
+        self.eval()
         init_seq = torch.zeros(seq_len, input_dim, device=self.device)
         # init_seq = [seq len, input dim]
 

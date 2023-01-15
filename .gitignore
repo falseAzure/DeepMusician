@@ -136,6 +136,7 @@ dmypy.json
 *.zip
 *.aux
 *.fdb_latexmk
+*.fls
 *.out
 *.log
 *.gz

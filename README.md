@@ -1,10 +1,10 @@
 # Deep Musician
 
-Generating new and unheard musical melodies with a deep neural network that was
-trained with existing MIDI files. The network uses a sequence aware Encoder-Decoder
-structure that is capable of creating sequences of notes of arbitrary length.
-The encoder and decoder each consist of a 2-layer GRU network, whereas the
-decoder has an additional classifier.
+Generating new and unheard musical melodies that resemble human ones with a
+deep neural network that was trained with existing MIDI files. The network uses
+a sequence aware Encoder-Decoder structure that is capable of creating
+sequences of notes of arbitrary length. The encoder and decoder each consist of
+a 2-layer GRU network, whereas the decoder has an additional classifier.
 
 ## Idea
 
@@ -309,10 +309,10 @@ found in ```train.py``` in the corresponding constants.
 | Exploring, analysing and preparing data   | 12        | 45
 | Designing and building an appropriate network | 25 | 40
 | Training and fine-tuning that network | 15 | 15
-| Building an application to present the results | 20 |
-| Writing the final report | 8 |
-| Preparing the presentation of your work | 5 |
-| **Sum** | 92 | 112 |
+| Building an application to present the results | 20 | 20
+| Writing the final report | 8 | 6
+| Preparing the presentation of your work | 5 | 5
+| **Sum** | 92 | 142 |
 
 ---
 ## References
@@ -348,7 +348,7 @@ A. Jagannathan, B. Chandrasekaran, S. Dutta, U. R. Patil and M. Eirinaki, "Origi
 Yang, Li-Chia & Chou, Szu-Yu & Yang, yi-hsuan. (2017). MidiNet: A Convolutional Generative Adversarial Network for Symbolic-domain Music Generation using 1D and 2D Conditions.
 
 <a id="9">[9]</a>
-Briot, Jean-Pierre & HADJERES, Gaëtan & Pachet, Francois. (2019). Deep Learning
+Briot, Jean-Pierre & HADJERES, Gaëtan & Pachet, Francois. (2017). Deep Learning
 Techniques for Music Generation - A Survey.
 
 <a id="10">[10]</a>

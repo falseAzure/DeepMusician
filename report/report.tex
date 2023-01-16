@@ -1,10 +1,10 @@
 %% Document Type
 \documentclass[a4paper, 10pt, xcolor=dvipsnames]{article} % use option titlepage to get the title on a page of its own.
-\pagenumbering{gobble} % define page numbering. [gobble] omits any numbering.
+\pagenumbering{arabic} % define page numbering. [gobble] omits any numbering.
 
 %% Packages
 % Document Layout
-\usepackage[left=2.5cm,right=2.5cm,top=1.5cm,bottom=2cm]{geometry}   % to change margins
+\usepackage[left=3cm,right=3cm,top=2cm,bottom=2cm]{geometry}   % to change margins
 \usepackage{titling}             % Uncomment both to   
 \setlength{\droptitle}{-2cm}     % change title position 
 \date{\vspace{-9ex}} % delete date - comment to insert date
@@ -221,7 +221,7 @@ with the topic of machine-generated music are:
 \end{enumerate}
 
 
-\section{Solution}
+\section{The Solution}
 The first point is solved by certain neural architectures (in particular RNN,
 LSTM and Attention Mechanism) that allow to integrate a temporal structure into
 the machine learning process. As a result, the individual training data are no
@@ -248,8 +248,22 @@ implementing a sequence aware model, that is capable of generating musical
 sequences of arbitrary length.\footnote{I realize that I am only scratching the
   surface of the issue given the incredibly vast and comprehensive models.}
 
+Generative algorithms that attempt to perform an artistic feat are almost
+exclusively implemented as neural networks. This is simply because they are the
+strongest and most comprehensive algorithms and can produce new data that did
+not occur during their training. Of course, it would also be possible to
+generate melodies via rule-based algorithms. However, these have the
+disadvantage of always following a certain rule or pattern and do not manage to
+surprise the user. The melody will always run within a certain framework, but
+will never have a "creative" potential beyond what has already been seen.
+Moreover, previous experiments in the literature have shown that the approach
+of creating generative melodies using neural networks is very successful. Of
+course, it would also be exciting to implement this reinforcement learning and
+to train the algorithm via positive and negative incentives. However, the
+problem here is that we a criterion for a beautiful and harmonic melody.
 
-\section{Goal}
+\section{Outline of the Project}
+\subsection{Goal}
 The goal of the project is to create a model that produces melodies that sound
 human, or natural, i.e., not mechanical. Making this goal mathematically
 quantifiable is not trivial, since there are a variety of ways to represent
@@ -260,9 +274,9 @@ algorithm predicts a certain sequence, but as we will see below, these have
 weighty drawbacks. Therefore, I remain with the approach of measuring generated
 melodies according to simply my human ear.
 
-\section{Data Structure}
+\subsection{Data Structure}
 
-\subsection{Representing Music}
+\subsubsection{Representing Music}
 
 The basis of music is formed by sequentially played sounds or tones that can
 be represented as a complex \emph{waveform}. These individual sounds can be joined
@@ -287,7 +301,7 @@ input of the model successively. While initially only monophonic audio tracks
 with constant dynamics and tone length are used, these parameters are to be
 successively added to the input to see how the created melodies change.
 
-\subsection{Preprocessing}
+\subsubsection{Preprocessing}
 However, neural networks cannot be trained with midi files themselves.
 Therefore, these must be converted into another form in which the notes can be
 passed to the network. There are a lot of possibilities for this, of which I
@@ -300,7 +314,7 @@ problem: since only a small percentage of the available cells are filled --
 i.e. most of the time NO note is played -- there is a big imbalance in the
 data.
 
-\section{Metric and Loss}
+\subsection{Metric and Loss}
 Classical metrics have difficulty dealing with this problem and return
 suggestive and misleading values, while classical losses do not optimise for
 the desired goal, that is the generation of a human sounding melody.
@@ -312,7 +326,7 @@ actually guessed almost all of the notes correctly as they were not being
 played. So the empty sequence resembled the input it was given most of the
 time. Or put, differently the model was stuck in a local minimum.
 
-\subsection{Focal loss}
+\subsubsection{Focal loss}
 
 I learned that image classification faces a similar problem and solves this by
 using a so called focal loss. Focal loss is a loss function that is used in
@@ -335,7 +349,21 @@ Yet, the two parameters of the focal loss (alpha and gamma) need to be
 carefully adjusted to obtain meaningful results.
 
 
-\section{Architecture}
+\subsection{Architecture}
+
+The architecture of the network consists of an encoder-decoder structure and a
+subsequent classifier. The input (a piano roll with length 96) is first passed
+through the encoder -- only the returned hidden state is of importance here,
+the output itself is discarded. Then an empty input (SOS-token) with the hidden
+state is passed to the decoder. This gives a new hidden state and a prediction
+about the next state. This prediction is then passed through the classifier and
+serves as a new input for the decoder together with the updated hidden state.
+This process runs over the entire length of the sequence, meaning that we
+iterate through the sequence length by starting with the SOS-Token, then using
+the previous output and hidden state as new input and. So while the encoder
+processes the incoming sequence all at once, the decoder and classifier build
+up the new sequence step by step.
+
 \begin{itemize}
   \item EncoderRNN: GRU(input: 88, hidden: 512, layers=2, dropout=0.2)
   \item DecoderRNN: GRU(input: 88, hidden: 512, layers=2, dropout=0.2)
@@ -349,41 +377,146 @@ carefully adjusted to obtain meaningful results.
         \end{itemize}
 \end{itemize}
 
-\section*{Workload}
-\begin{tabular}{lrr}
-  Task                                           & estimated & actual \\
-  \hline
-  \hline
-  Dataset collection                             & 7         & 12     \\
-  Exploring, analysing and preparing data        & 12        & 45     \\
-  Designing and building an appropriate network  & 25        & 40     \\
-  Training and fine-tuning that network          & 15        & 15     \\
-  Building an application to present the results & 20        & 20     \\
-  Writing the final report                       & 8         & 6      \\
-  Preparing the presentation of your work        & 5         & 5
-\end{tabular}
+\section{Main Takeaways}
 
-\pagebreak
-What is the problem that you tried to solve?
-Why is it a problem?
-What is your solution?
-Why is it a solution? (And in particular, why is or isn’t deep learning a solution?)
+The three most important takeaways of the project for me concern preprocessing,
+the evaluation and hardware.
 
-Additionally, it should cover:
+\subsection{Preprocessing}
+Here I learned in particular that the preprocessing part can
+exceed the other parts of the project by a wide margin in terms of time. So far
+I have worked in the field of machine learning especially with text,
+audiovisual data and numerical values. However, the symbolic representation of
+music was previously unknown to me from a computer science perspective. While I
+know that preprocessing from the other domains can also be time consuming, I
+was just overwhelmed by the wealth of possibilities with symbolic music and the
+time I needed to invest in order to obtain a meaningful representation of the
+music. Here it was important to keep a good overview and not get lost in the
+possibilities. The individual advantages and disadvantages may not be evident
+at first, but if you start with a simple approach, you can slowly work your way
+up and document the differences and improvements. It is important to keep in
+mind, however, that the different forms of representation are often so
+different that they cannot simply be fed into the existing network - for
+example, if one chooses a text-based representation as opposed to a piano roll.
 
-- main insights (what improved what)
-- what would I do differently next time
-- time?
-- underestimated?
+\subsection{Evaluation}
+The most important lesson in terms of evaluation and training I learned about
+metrics and loss is that a model that is almost perfect (in terms of certain
+metrics) may still produce meaningless results. A high Accuracy or a F1 value
+may still mean that the desired results are not achieved. This is due to the
+fact that these metrics only represent an abstract value and abstract from the
+concrete situation. Therefore, it is always important - even if sometimes
+tedious - to look at concrete examples in the evaluation and not just to stay
+with the abstract metrics, as these can often be deceptive. In my case, as
+described above, my model had a very high accuracy, because the generated
+melodies were simply empty and therefore almost all notes were predicted
+correctly. The fact that this output completely contradicted the original
+approach is of course irrelevant for the model - it does what it is told to do.
+By changing the loss function, I was able to counteract this imbalance in the
+data (to a certain extent). In any case, the insight remains that in future
+projects I will pay even closer attention to the metrics used and the loss, and
+that I will always check the results with concrete individual cases during the
+evaluation and not rely merely on the simple metrics of the model.
 
-The main take-aways and insights you gained from your project (e.g.,
-batch-normalization improved the results significantly, Adadelta worked much
-better than SGD on my data, annotating data works really good with tool X,
-setting up the pre-processing takes much more time than I expected, ...) If you
-would do the same project again, what - if anything - would you do differently?
-How much time did you spend on your project? How does the number compare to
-your initial estimate? If you underestimated any part, what were the reasons
-for this?
+\subsection{Hardware}
+In addition to the aforementioned problem of empty melodies, I also had to
+struggle in particular with the limitations of my hardware, which does NOT
+include an Nvidia graphics card. To train an epoch merely with Mozart's sonatas
+with my CPU takes me a little more than half an hour. However, in this field of
+research, training over several hundred epochs is not uncommon. Because of this
+limitation, I have only ever been able to carry out my experiments with even
+smaller samples and a few epochs, which of course greatly distorts the results.
+This problem can either be solved by reverting to a simpler model (which is
+sometimes not possible) or to outsource the computation to a different machine,
+e.g. cloud computing service.
+
+
+\section{Workload}
+\begin{table}[!h]
+  \begin{center}
+    \begin{tabular}{lrr}
+      Task                                           & estimated & actual \\
+      \hline
+      \hline
+      Dataset collection                             & 7         & 12     \\
+      Exploring, analysing and preparing data        & 12        & 45     \\
+      Designing and building an appropriate network  & 25        & 40     \\
+      Training and fine-tuning that network          & 15        & 17     \\
+      Building an application to present the results & 20        & 21     \\
+      Writing the final report                       & 8         & 6      \\
+      Preparing the presentation of your work        & 5         & 4      \\
+      \hline
+      Sum                                            & 92        & 146
+    \end{tabular}
+    \caption{Workload}
+  \end{center}
+\end{table}
+
+Overall, I invested an above-average amount of time in the project. On the one
+hand, this is due to the fact that I had an incredible amount of fun and
+enjoyment with the project, since it encompasses the entire process from the
+idea to the deployment and you can shape and follow the entire development.
+Also, the fact that we were encouraged to structure the project cleanly and
+neatly, to include automated tests and to generally orientate ourselves to the
+current business workflow and not just deliver a Jupyter notebook, I found very
+inspiring and justified for me to invest more time than planned.
+
+On the other hand, and this is also reflected in the divergence between the
+estimated and actual timeline, I especially underestimated the data preparation
+and preprocessing. This is certainly due to the underlying data structure
+(MIDI), which cannot be easily processed or used for machine learning - many
+preprocessing steps were required here. In addition, I was initially
+overwhelmed by the sheer amount of options for representing MIDI data and
+researched for a long time before deciding on one. In retrospect, it would have
+made more sense to choose a simple approach from the beginning and implement it
+as soon as possible to have a working pipeline. In general, this is one of the
+main lessons I take away from the project: implement a simple pipeline
+(baseline) quickly at the beginning and develop further based on it, instead of
+starting with the biggest step and implementing everything perfectly (state of
+the art) from the beginning.
+
+The second major divergence between estimated and actual timeline is found in
+designing and building an appropriate network. This is especially due to the
+fact that I have never implemented a generative algorithm using RNNs before and
+wanted to get to know the structure in more detail to create a kind of
+blueprint for myself that I can use for further projects. In addition, I wanted
+to work with Pytorch Lightning, which I have also never used before, as it
+eliminates the need for a lot of boilerplate code. So the time difference in
+the network designing process is especially also due to learning new framworks
+and techniques as well as building a well documented blueprint and could have
+been reduced for sure. However, it was worth it to me as it will save me
+additional time in the future.
+
+So in summary, the next time I would start with a reduced approach and work my
+way up from there in small steps instead of doing everything in one go. This
+not only has the advantage that you quickly have a baseline (and a
+corresponding sense of achievement), but also that you can track the individual
+steps and improvements more precisely and thus have a better comparison between
+the models. Otherwise, I am very satisfied with my way of working and structure
+and would also try to organize it accordingly well for further projects.
+
+
+
+% \pagebreak
+% What is the problem that you tried to solve?
+% Why is it a problem?
+% What is your solution?
+% Why is it a solution? (And in particular, why is or isn’t deep learning a solution?)
+% > Sequence awareness vs rule based!
+
+% Additionally, it should cover:
+
+% - main insights (what improved what)
+% - what would I do differently next time
+
+% The main take-aways and insights you gained from your project (e.g.,
+% batch-normalization improved the results significantly, Adadelta worked much
+% better than SGD on my data, annotating data works really good with tool X,
+% setting up the pre-processing takes much more time than I expected, ...) If you
+% would do the same project again, what - if anything - would you do differently?
+% How much time did you spend on your project? How does the number compare to
+% your initial estimate? If you underestimated any part, what were the reasons
+% for this?
 
 \printbibliography
 

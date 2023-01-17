@@ -3,10 +3,13 @@
 .tox/
 .vscode/
 build/
-checkpoints/
 data/
 deepmusicio.egg-info/
 generated_seq/
 lightning_logs/
+model/
 playaround/
+lightning_logs/
+presentation/
+report/
 tests/

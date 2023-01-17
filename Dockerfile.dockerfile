@@ -12,5 +12,5 @@ COPY . .
 RUN pip install -e .
 
 
-ENTRYPOINT ["python3","scripts/train.py"]
+ENTRYPOINT ["python3", "scripts/train.py"]
 CMD ["--path", "--n_epochs", "--batch_size"]

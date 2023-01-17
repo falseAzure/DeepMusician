@@ -25,8 +25,8 @@ DROP_OUT = 0.2
 TEACHER_FORCING_RATIO = 0.5
 N_WORKERS = 8
 CRITERION = "focal"
-GAMMA = 2  # 1
-ALPHA = 0.00001  # 1e-6,
+GAMMA = 1  # 1
+ALPHA = 1e-6  # 1e-6,
 THRESHOLD = 0.5
 SOS_TOKEN = torch.zeros(1, BATCH_SIZE, INPUT_DIM)
 ACCELERATOR = "cpu"
@@ -612,6 +612,8 @@ class Seq2Seq(pl.LightningModule):
             decoder_input = classifier_output
 
         output_seq = (output_seq > threshold).int()
+
+        self.train()
         return output_seq.detach().numpy()
         # output_seq = [seq_len, input dim]
 

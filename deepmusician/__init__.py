@@ -1,1 +1,1 @@
-__all__ = ["seq2seq", "utils_pretty_midi", "utils_music21"]
+__all__ = ["seq2seq", "utils_pretty_midi", "utils_music21", "utils_app"]

@@ -141,9 +141,12 @@ dmypy.json
 *.fdb_latexmk
 *.fls
 *.log
+*.nav
 *.out
 *.run.xml
+*.snm
 *.gz
+*.toc
 
 
 data/maestro/

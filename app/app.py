@@ -7,8 +7,7 @@ from deepmusician.seq2seq import Seq2Seq
 from deepmusician.utils_app import pianoroll_to_midi
 
 app = Flask(__name__)
-model_file = "../playaround/checkpoints/epoch=2-train_loss=0.0000006649.ckpt"
-midi_file = "test.mid"
+model_file = "model/model.ckpt"
 model = Seq2Seq(batch_size=32)
 model.load_from_checkpoint(model_file)
 
@@ -16,6 +15,7 @@ model.load_from_checkpoint(model_file)
 @app.route("/")
 def home():
     return render_template("index.html")
+
 
 # route to the generate page
 @app.route("/generate", methods=["POST"])

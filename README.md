@@ -203,7 +203,7 @@ generate.py [-h] -c CHECKPOINT [-l SEQ_LEN] [-d DIVISION] [-i {zero,random,guide
 To generate a new sequence with a trained model, run:
 
 ```bash
-python scripts/generate.py -c data/model.ckpt -l 192
+python scripts/generate.py -c model/model.ckpt -l 192
 ```
 
 Additional information about the parameters can be returned via:
@@ -212,6 +212,13 @@ Additional information about the parameters can be returned via:
 python scripts/train.py -h
 python scripts/generate.py -h
 ```
+
+#### App
+
+The project also has an interactive Application (using flask), that let's you
+generate sequences of arbitrary length:
+
+````python app/app.py```
 
 ## Experiment
 

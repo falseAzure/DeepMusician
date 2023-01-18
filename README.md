@@ -121,15 +121,27 @@ pip install -e .
 ```
 📦DeepMusician
  ┣ .circleci
+ ┣ 📂app
+ ┃ ┣ 📂static/css
+ ┃ ┣ 📂templates
+ ┃ ┗ 📜app.py
  ┣ 📂data
  ┃ ┣ 📜README.md
  ┃ ┣ 📜dl_bitmidi.py
  ┃ ┗ 📜download.sh
- ┣ deepmusician
+ ┣ 📂deepmusician
  ┃ ┣ 📜__init__.py
  ┃ ┣ 📜seq2seq.py
  ┃ ┣ 📜utils_music21.py
  ┃ ┗ 📜utils_pretty_midi.py
+ ┣ 📂model
+ ┃ ┗ 📜model.ckpt
+ ┣ 📂presentation
+ ┃ ┣ 📜presentation.pdf
+ ┃ ┗ 📜presentation.tex
+ ┣ 📂report
+ ┃ ┣ 📜report.pdf
+ ┃ ┗ 📜report.tex
  ┣ 📂scripts
  ┃ ┣ 📜evaluate.py
  ┃ ┣ 📜generate.py
@@ -139,9 +151,11 @@ pip install -e .
  ┃ ┣ 📜test_postprocess.py 
  ┃ ┣ 📜test_preprocess.py 
  ┃ ┗ 📜test_train.py
+ ┣ 📜.dockerignore
  ┣ 📜.gitignore
- ┣ 📜pyproject.toml
+ ┣ 📜Dockerfile.dockerfile
  ┣ 📜README.md
+ ┣ 📜pyproject.toml
  ┗ 📜tox.ini
 ```
 
@@ -219,6 +233,10 @@ The project also has an interactive Application (using flask), that let's you
 generate sequences of arbitrary length:
 
 ````python app/app.py```
+
+Simply execute the command above, enter a sequence length and generate a music
+sequence, that is shown as a pianoroll on the bottom and can be played back
+via pressing the play button.
 
 ## Experiment
 

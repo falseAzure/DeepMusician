@@ -14,7 +14,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils import data
 from torch.utils.data import DataLoader
 
-from utils_music21 import plot_pianoroll
+from deepmusician.utils_music21 import plot_pianoroll
 
 INPUT_DIM = 88
 SEQ_LEN = 96

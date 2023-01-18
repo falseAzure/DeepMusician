@@ -260,10 +260,10 @@ Moreover, previous experiments in the literature have shown that the approach
 of creating generative melodies using neural networks is very successful. Of
 course, it would also be exciting to implement this reinforcement learning and
 to train the algorithm via positive and negative incentives. However, the
-problem here is that we a criterion for a beautiful and harmonic melody. But to
-be frank, due to hardware limitations, the melodies my model produced are
-similar to simple based melodies, which are not very interesting. Yet, this
-should be solved with more powerful hardware.
+problem here is that we would need a measurable criterion for beautiful and
+harmonic melodies. But to be frank, due to hardware limitations, the melodies
+my model produced so far are similar to simple based melodies, which are not
+very interesting. Yet, this should be solved with more powerful hardware.
 
 \section{Outline of the Project}
 \subsection{Goal}
@@ -315,12 +315,15 @@ with 1 in the matrix at the corresponding time t - all other cells remain empty
 (0). This representation is very clear and intuitive. However, it has a big
 problem: since only a small percentage of the available cells are filled --
 i.e. most of the time NO note is played -- there is a big imbalance in the
-data.
+data. Here other representations such as the language based ones would have
+definitely been better.
 
 \subsection{Metric and Loss}
-Classical metrics have difficulty dealing with this problem and return
-suggestive and misleading values, while classical losses do not optimise for
-the desired goal, that is the generation of a human sounding melody.
+Although the final goal of the model is to generate melodies that sound human,
+we need to define a metric and loss that quantifies this. This is not trivial,
+since classical metrics have difficulty dealing with this problem and return
+suggestive and misleading values and classical losses do not optimise for the
+desired goal, that is the generation of a human sounding melody.
 
 I faced this problem during the later stages of my experiment, when the model
 easily learned according to the classical BCE-loss, but afterwards during

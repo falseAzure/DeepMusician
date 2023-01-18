@@ -177,16 +177,16 @@
     \begin{itemize}
         \item Use symbolic representation of music
         \item[$\rightarrow$] Midi Files
-        \item[$\rightarrow$] Piano roll, that captures the
-            notes played at each time step
+        \item[$\rightarrow$] \textbf{Piano roll}, that captures the
+            notes played at each time step (2D-Array)
     \end{itemize}
 
     \textbf{Architecture}
     \begin{itemize}
-        \item Sequence aware encoder-decoder architecture
-        \item Each consist of a two-layered GRU
-        \item The encoder encodes the input sequence at once
-        \item The decoder generates the output sequence step by step according
+        \item Sequence aware \textbf{encoder-decoder} architecture
+        \item Each consist of a two-layered \textbf{GRU}
+        \item The \textbf{encoder} encodes the input sequence at once
+        \item The \textbf{decoder} generates the output sequence step by step according
               to the previous ones
     \end{itemize}
 \end{frame}
@@ -194,13 +194,22 @@
 \begin{frame}{Generation}
     \textbf{Sequence 2 Sequence}
     \begin{itemize}
-        \item 
+        \item During \textbf{training} the model tries to predict the next note
+        \item After training the model is started with an empty sequence
+        \item[$\rightarrow$] This triggers the model to incrementally
+            \textbf{generate}
+            a sequence of notes
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Results}
     \begin{itemize}
-        \item Unfortunately the results are not very good
+        \item The results measured by the loss function are very promising.
+        \item Yet the generated music is not very good and most of the time
+              only an empty sequence is returned.
+        \item[$\rightarrow$] The model is not able to generate a coherent
+            melody, since the training data is very \textbf{imbalanced}: Most
+            of the time the notes are not played at all.
     \end{itemize}
 \end{frame}
 
@@ -208,10 +217,26 @@
     \textbf{Preprocessing}
     \begin{itemize}
         \item Endless possibilities to represent the underlying data
-        \item The model is not able to learn the rhythm of the music
-        \item The model is not able to learn the melody of the music
+        \item There is not a single best representation: each have there own
+              advantages and disadvantages
+        \item Beside the piano roll representation, there are also symbolic
+              representations that represent the music as a sequence of words.
     \end{itemize}
-    
+\end{frame}
+
+\begin{frame}{Insights}
+    \textbf{Evaluation}
+    \begin{itemize}
+        \item Although the loss function is a good indicator for the
+              performance of the model, it is not a good measure for the
+              quality of the generated music.
+        \item Instead of a classical BCE-loss, I used a loss function that was
+              initially developed for image recognition and object detection:
+              \textbf{Focal Loss}.
+        \item[$\rightarrow$] The main idea behind focal loss is to down-weight
+            the contribution of easy examples in the training data and focus more
+            on the hard examples
+    \end{itemize}
 \end{frame}
 
 \end{document}

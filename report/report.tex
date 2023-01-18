@@ -349,7 +349,8 @@ performance on the task.
 With the introduction of focal loss in my model it started generating
 meaningful sequences of notes. To keep track of the validity of the generation
 of sequences I also introduced a density metric, that measures the average
-notes played per time step.
+notes played per time step. What is more, lowering the learning rate also
+helped a lot in not getting stuck in a local minimum.
 
 Yet, the two parameters of the focal loss (alpha and gamma) need to be
 carefully adjusted to obtain meaningful results, which for this project has not

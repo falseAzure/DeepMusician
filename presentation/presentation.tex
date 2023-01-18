@@ -1,5 +1,5 @@
 %% Document Type
-\documentclass[xcolor={dvipsnames},10pt]{beamer}
+\documentclass[xcolor={dvipsnames},12pt]{beamer}
 
 %% Packages
 % Language
@@ -162,28 +162,56 @@
 \begin{document}
 \maketitle
 
-\begingroup
-\setbeamertemplate{footline}{}
-\begin{frame}{Inhaltsverzeichnis}
-    \begin{multicols}{3}
-        \tableofcontents
-    \end{multicols}
-\end{frame}
-\endgroup
-
-
-\section{Section}
-\subsection{Subsection 1}
-\begin{frame}{Frame 1}
-
-    \href{https://www.google.de/}{Link}
+\begin{frame}{Idea}
+    \textbf{Music Generation}
+    \begin{itemize}
+        \setlength\itemsep{1em}
+        \item Create a model that can automatically generate music
+        \item Train the model on a large dataset of existing music
+        \item Use the model to generate new, unheard music of arbitrary length
+    \end{itemize}
 \end{frame}
 
-\subsection{Subsection 2}
-\begin{frame}{Frame 2}
-    Text
+\begin{frame}{Approach}
+    \textbf{Preprocessing - get the data in shape}
+    \begin{itemize}
+        \item Use symbolic representation of music
+        \item[$\rightarrow$] Midi Files
+        \item[$\rightarrow$] Piano roll, that captures the
+            notes played at each time step
+    \end{itemize}
+
+    \textbf{Architecture}
+    \begin{itemize}
+        \item Sequence aware encoder-decoder architecture
+        \item Each consist of a two-layered GRU
+        \item The encoder encodes the input sequence at once
+        \item The decoder generates the output sequence step by step according
+              to the previous ones
+    \end{itemize}
 \end{frame}
 
+\begin{frame}{Generation}
+    \textbf{Sequence 2 Sequence}
+    \begin{itemize}
+        \item 
+    \end{itemize}
+\end{frame}
 
+\begin{frame}{Results}
+    \begin{itemize}
+        \item Unfortunately the results are not very good
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Insights}
+    \textbf{Preprocessing}
+    \begin{itemize}
+        \item Endless possibilities to represent the underlying data
+        \item The model is not able to learn the rhythm of the music
+        \item The model is not able to learn the melody of the music
+    \end{itemize}
+    
+\end{frame}
 
 \end{document}

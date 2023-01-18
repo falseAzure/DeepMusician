@@ -184,18 +184,19 @@
     \textbf{Architecture}
     \begin{itemize}
         \item Sequence aware \textbf{encoder-decoder} architecture
-        \item Each consist of a two-layered \textbf{GRU}
-        \item The \textbf{encoder} encodes the input sequence at once
-        \item The \textbf{decoder} generates the output sequence step by step according
-              to the previous ones
+        \item[$\rightarrow$] Each consist of a two-layered \textbf{GRU}
+            % \item The \textbf{encoder} encodes the input sequence at once
+            % \item The \textbf{decoder} generates the output sequence step by step according
+            %       to the previous ones
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Generation}
     \textbf{Sequence 2 Sequence}
     \begin{itemize}
-        \item During \textbf{training} the model tries to predict the next note
-        \item After training the model is started with an empty sequence
+        \item During \textbf{training} the model sees sequences and tries
+              to predict the next note  
+        \item After training the model is started with an empty step
         \item[$\rightarrow$] This triggers the model to incrementally
             \textbf{generate}
             a sequence of notes

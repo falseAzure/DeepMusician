@@ -14,6 +14,8 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils import data
 from torch.utils.data import DataLoader
 
+from utils_music21 import plot_pianoroll
+
 INPUT_DIM = 88
 SEQ_LEN = 96
 HIDDEN_SIZE = 512
@@ -205,7 +207,7 @@ class Loss(nn.Module):
     """
     A class to compute the loss function.
 
-    Has three loss types: "bce", "focal", "focal+"
+    Has four loss types: "bce", "focal", "focal+" and "focal_new"
 
     gamma: focal loss power parameter, that controls how easy examples are
     down-weighted and is indicated by a float scalar. 'When gamma = 0, FL is
@@ -228,7 +230,8 @@ class Loss(nn.Module):
             "bce",
             "focal",
             "focal+",
-        ], "type must be 'bce', 'focal' or 'focal+'"
+            "focal_new",
+        ], "type must be 'bce', 'focal', 'focal+' or 'focal_new"
         self.register_buffer("gamma", torch.tensor(gamma, dtype=torch.float32))
         self.alpha = alpha
         self.loss = loss
@@ -246,6 +249,15 @@ class Loss(nn.Module):
         if self.loss == "focal+":
             return focal_loss(
                 outputs, targets, alpha=self.alpha, gamma=self.gamma, variation="focal+"
+            )
+
+        if self.loss == "focal_new":
+            return focal_loss(
+                outputs,
+                targets,
+                alpha=self.alpha,
+                gamma=self.gamma,
+                variation="focal_new",
             )
 
 
@@ -519,6 +531,10 @@ class Seq2Seq(pl.LightningModule):
 
         # generate sequence and get density
         seq = self.generate_sequence()
+        if seq.sum() > 0:
+            plot_pianoroll(seq)
+        else:
+            print("Empty sequence generated")
         seq_dens = seq.sum() / len(seq)
         self.log("gen_seq_dens", seq_dens, prog_bar=True, logger=True)
         print(
@@ -527,7 +543,7 @@ class Seq2Seq(pl.LightningModule):
             " - Recall: ",
             round(recall.item(), 4),
             " - Density: ",
-            round(seq_dens, 0),
+            round(seq_dens, 2),
             sep="",
         )
 
@@ -681,12 +697,12 @@ def get_density(prediction, threshold=0.5):
     )
 
 
-def focal_loss(outputs, targets, alpha=0.25, gamma=2, variation="focal"):
+def focal_loss(outputs, targets, alpha=ALPHA, gamma=GAMMA, variation="focal"):
     """
     Function that computes the focal loss for binary classification, which is
     used be the Loss class of this model.
 
-    Has two variation: "bce", "focal", "focal+"
+    Has thre variation: "bce", "focal", "focal+" and "focal_new"
 
     gamma: focal loss power parameter, that controls how easy examples are
     down-weighted and is indicated by a float scalar. 'When gamma = 0, FL is
@@ -702,7 +718,11 @@ def focal_loss(outputs, targets, alpha=0.25, gamma=2, variation="focal"):
     see: https://arxiv.org/pdf/1708.02002.pdf
     """
 
-    assert variation in ["focal", "focal+"], "type must be 'focal' or 'focal+'"
+    assert variation in [
+        "focal",
+        "focal+",
+        "focal_new",
+    ], "type must be 'focal', 'focal+' or 'focal_new'"
 
     if variation == "focal":
         BCE_loss = F.binary_cross_entropy(outputs, targets, reduction="none")
@@ -727,3 +747,11 @@ def focal_loss(outputs, targets, alpha=0.25, gamma=2, variation="focal"):
         F_loss = -alpha_factor * focal_weight * torch.log(probabilities + 1e-8)
 
         return F_loss.mean()
+
+    if variation == "focal_new":
+        t = targets.float()
+        p = outputs.sigmoid().detach()
+        pt = p * t + (1 - p) * (1 - t)  # pt = p if t > 0 else 1-p
+        w = alpha * t + (1 - alpha) * (1 - t)  # w = alpha if t > 0 else 1-alpha
+        w = w * (1 - pt).pow(gamma)
+        return F.binary_cross_entropy_with_logits(outputs, t, w, reduction="sum")

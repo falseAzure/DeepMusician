@@ -195,7 +195,7 @@
     \textbf{Sequence 2 Sequence}
     \begin{itemize}
         \item During \textbf{training} the model sees sequences and tries
-              to predict the next note  
+              to predict the next note
         \item After training the model is started with an empty step
         \item[$\rightarrow$] This triggers the model to incrementally
             \textbf{generate}
@@ -205,9 +205,10 @@
 
 \begin{frame}{Results}
     \begin{itemize}
-        \item The results measured by the loss function are very promising.
+        \item The results measured in terms of the loss function and accuracy
+              are very promising.
         \item Yet the generated music is not very good and most of the time
-              only an empty sequence is returned.
+              only an empty sequence was returned.
         \item[$\rightarrow$] The model is not able to generate a coherent
             melody, since the training data is very \textbf{imbalanced}: Most
             of the time the notes are not played at all.
@@ -228,8 +229,8 @@
 \begin{frame}{Insights}
     \textbf{Evaluation}
     \begin{itemize}
-        \item Although the loss function is a good indicator for the
-              performance of the model, it is not a good measure for the
+        \item Although the loss function and accuracy are a good indicator for
+              the performance of the model, they are not a good measure for the
               quality of the generated music.
         \item Instead of a classical BCE-loss, I used a loss function that was
               initially developed for image recognition and object detection:

@@ -156,7 +156,7 @@ very resource intensive and can thus -- simply due to hardware limitations
 In contrast, there are also more lightweight approaches that use a variety of
 RNN structures (such as LSTM models or RNN \cite{lewandowski2012,
   jedrzejewska2018, hewahi2019, ycart2017, mangal2019} with Self-Attention
-\cite{jagannathan2022} and even a CNN \cite{yang2017} - which is quite
+\cite{jagannathan2022} and even a CNN \cite{yang2017} -- which is quite
 interesting considering the temporal dimension of music that CNN are not
 designed to depict. (For a general overview of the different approaches of
 generative music models see: \cite{briot2017}.)
@@ -197,7 +197,7 @@ by means of a practical application to what extent machine learning produces
 musical pieces that we as humans grasp as melodious, beautiful, and and
 ultimately human. Thus reformulating the former existential question to a
 rather categorical and technical one: How do the creations of machines differ
-from that of their human "counterparts" - and are we able to tell the
+from that of their human "counterparts" -- and are we able to tell the
 difference?
 
 \subsection{The concrete problem}
@@ -296,7 +296,7 @@ The advantage here is that the concrete instrumentation is abstracted from and
 only the internal \emph{structure} of the piece is considered. The generally
 accepted standard for this representation is \emph{MIDI}. By means of MIDI it
 is possible to transmit not only the pitch and length of the individual notes,
-but also other parameters such as velocity - yet, no concrete waveform is
+but also other parameters such as velocity -- yet, no concrete waveform is
 produced.
 
 Thus, due to its abstract nature MIDI offers the possibility to extend the
@@ -311,7 +311,7 @@ passed to the network. There are a lot of possibilities for this, of which I
 have chosen a rather classical and simple one: The piano roll. Here a 2
 dimensional matrix is spanned, whose x-axis represents the time and whose
 y-axis represents the 88 notes of the piano. Each touch of a note is marked
-with 1 in the matrix at the corresponding time t - all other cells remain empty
+with 1 in the matrix at the corresponding time t -- all other cells remain empty
 (0). This representation is very clear and intuitive. However, it has a big
 problem: since only a small percentage of the available cells are filled --
 i.e. most of the time NO note is played -- there is a big imbalance in the
@@ -404,7 +404,7 @@ possibilities. The individual advantages and disadvantages may not be evident
 at first, but if you start with a simple approach, you can slowly work your way
 up and document the differences and improvements. It is important to keep in
 mind, however, that the different forms of representation are often so
-different that they cannot simply be fed into the existing network - for
+different that they cannot simply be fed into the existing network -- for
 example, if one chooses a text-based representation as opposed to a piano roll.
 
 Linked to this is also the insight that there can be an unbelievable number of
@@ -416,8 +416,9 @@ and possibly even change the underlying data structure to achieve your goal. It
 was really impressive to see the sheer number of ways that symbolic music can
 be represented (from classical piano rolls to linguistic models), all of which
 highlight different aspects and provide benefits. I would have liked to try out
-more of these approaches - but in the end I was glad to have limited myself to
-only one.
+more of these approaches -- especially, since the language based ones would
+have inherently solved the problem of imbalanced data. But in the end I was
+glad to have limited myself to only one.
 
 \subsection{Evaluation}
 The most important lesson in terms of evaluation and training I learned about
@@ -425,13 +426,13 @@ metrics and loss is that a model that is almost perfect (in terms of certain
 metrics) may still produce meaningless results. A high Accuracy or a F1 value
 may still mean that the desired results are not achieved. This is due to the
 fact that these metrics only represent an abstract value and abstract from the
-concrete situation. Therefore, it is always important - even if sometimes
-tedious - to look at concrete examples in the evaluation and not just to stay
+concrete situation. Therefore, it is always important -- even if sometimes
+tedious -- to look at concrete examples in the evaluation and not just to stay
 with the abstract metrics, as these can often be deceptive. In my case, as
 described above, my model had a very high accuracy, because the generated
 melodies were simply empty and therefore almost all notes were predicted
 correctly. The fact that this output completely contradicted the original
-approach is of course irrelevant for the model - it does what it is told to do.
+approach is of course irrelevant for the model -- it does what it is told to do.
 By changing the loss function, I was able to counteract this imbalance in the
 data (to a certain extent). In any case, the insight remains that in future
 projects I will pay even closer attention to the metrics used and the loss, and
@@ -484,7 +485,7 @@ inspiring and justified for me to invest more time than planned.
 On the other hand, and this is also reflected in the divergence between the
 estimated and actual timeline, I especially underestimated the data preparation
 and preprocessing. This is certainly due to the underlying data structure
-(MIDI), which cannot be easily processed or used for machine learning - many
+(MIDI), which cannot be easily processed or used for machine learning -- many
 preprocessing steps were required here. In addition, I was initially
 overwhelmed by the sheer amount of options for representing MIDI data and
 researched for a long time before deciding on one. In retrospect, it would have
